@@ -1,155 +1,10 @@
-<!-- <template>
+<template>
   <div>
     <div :class="['head-layout', { collapsed: isSidebarCollapsed }]">
       <div class="head-content">
-        <header class="border-b bg-white px-5 py-2.5 sm:px-5">
-          <Breadcrumbs :items="breadcrumbsList" class="bg-inherit" />
-        </header>
-      </div>
-    </div>
-    <div :class="['layout', { collapsed: isSidebarCollapsed }]">
-      <LeftSidebar :isCollapsed="isSidebarCollapsed" @toggle="toggleSidebar" />
-      <div class="main-content">
-        <div class="flex flex-col gap-2 rounded-md border p-4">
-          <div class="p-2 bg-white">
-            <div class="truncate text-3xl font-semibold">{{ name }}</div>
-            <FormControl
-              :type="'text'"
-              size="sm"
-              variant=""
-              placeholder=""
-              :disabled="false"
-              label="Label"
-              v-model="name"
-            />
-          </div>
-          <div class="p-2">
-            <FormControl
-              :type="'text'"
-              size="sm"
-              variant="subtle"
-              placeholder="Placeholder"
-              :disabled="false"
-              label="Label"
-              v-model="inputValue"
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
-<script>
-import LeftSidebar from '@/components/Custom Layout/LeftSidebar.vue';
-import { ref, onMounted } from 'vue';
-import { createResource, Breadcrumbs, FormControl } from 'frappe-ui';
-import { useRouter, useRoute } from 'vue-router';
-
-export default {
-  components: {
-    LeftSidebar,
-    Breadcrumbs,
-    FormControl,
-  },
-  setup() {
-    const router = useRouter();
-    const route = useRoute(); 
-
-    const isSidebarCollapsed = ref(false);
-    const name = ref('');
-    const inputValue = ref('');
-
-    const order = createResource({
-      url: '/api/method/frappe.client.get_list',
-      params: {
-        doctype: 'Sales Order',
-        fields: ['*'],
-      },
-    });
-
-    const fetchmaterialreqDetails = async () => {
-      try {
-        const id = route.params.id;
-        const data = await order.fetch();
-        const materialreqDetails = data.find(item => item.name === id);
-        if (materialreqDetails) {
-          name.value = materialreqDetails.name;
-          inputValue.value = materialreqDetails.status; 
-        }
-        console.log('Fetched order details:', materialreqDetails);
-      } catch (error) {
-        console.error('Error fetching order details:', error);
-      }
-    };
-
-    const toggleSidebar = () => {
-      isSidebarCollapsed.value = !isSidebarCollapsed.value;
-    };
-
-    onMounted(() => {
-      fetchmaterialreqDetails();
-    });
-
-    return {
-      isSidebarCollapsed,
-      name,
-      inputValue,
-      toggleSidebar,
-    };
-  },
-}
-</script>
-
-<style scoped>
-.head-layout {
-  display: flex;
-  width: 100%;
-  transition: margin-left 0.3s ease;
-}
-.layout {
-  display: flex;
-  width: 100%;
-  height: 100vh;
-  transition: margin-left 0.3s ease;
-}
-
-.main-content {
-  flex-grow: 1;
-  padding: 1.25rem;
-  transition: margin-left 0.3s ease;
-  margin-left: 220px; /* Default width of sidebar */
-}
-.head-content {
-  flex-grow: 1;
-  padding: 0px;
-  transition: margin-left 0.3s ease;
-  margin-left: 220px; /* Default width of sidebar */
-}
-.collapsed .main-content {
-  margin-left: 60px; /* Adjust when sidebar is collapsed */
-}
-.collapsed .head-content {
-  margin-left: 60px; /* Adjust when sidebar is collapsed */
-}
-.list-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 10px;
-  border-bottom: 1px solid #e5e7eb; /* Gray bottom border */
-}
-
-.row:hover {
-  background-color: #f9fafb; /* Light gray background on hover */
-}
-</style>
- -->
-
- <template>
-  <div>
-    <div :class="['head-layout', { collapsed: isSidebarCollapsed }]">
-      <div class="head-content">
-        <header class="border-b bg-white px-5 py-6.5 pb-[2.625rem] sm:px-5 mb-12">
+        <header
+          class="bdelivery-b bg-white px-5 py-6.5 pb-[2.625rem] sm:px-5 mb-12"
+        >
           <Breadcrumbs :items="breadcrumbsList" class="float-left" />
           <Button
             :variant="'solid'"
@@ -169,52 +24,182 @@ export default {
     </div>
     <div :class="['layout', { collapsed: isSidebarCollapsed }]">
       <LeftSidebar :isCollapsed="isSidebarCollapsed" @toggle="toggleSidebar" />
-      <div class="main-content">
-        <div class="bg-white shadow-md rounded-lg p-6 space-y-6">
-          <!-- Section 1: Form Title -->
-          <div class="border-b pb-4">
-            <h1 class="text-2xl font-bold text-gray-800 float-left">
-              {{ name }}
-            </h1>
-            <Button
-              :variant="'solid'"
-              theme="gray"
-              size="sm"
-              label="Action"
-              :disabled="false"
-              class="float-right mb-4"
-            />
-            <div class="flex justify-end space-x-4 pt-4"></div>
-          </div>
-          <div :class="['flex items-center space-x-2 rounded-md p-2', statusBorColor]">
-            <div :style="{ backgroundColor: statusColor, borderColor: borderColor, borderWidth: borderWidth, borderStyle: 'solid' }" class="status-dot"></div>
+      <div class="main-content p-5">
+        <div class="bdelivery-b pb-1 -mt-10">
+          <h1 class="text-2xl font-bold text-gray-800 float-left">
+            {{ name }}
+          </h1>
+          <div class="ml-10">
+          <Badge :variant="'subtle'" theme="gray" size="md" label="Badge" class="ml-5">
+            <div class="flex items-center ">
+              <div
+                :style="{
+                  backgroundColor: statusColor,
+                  bdeliveryColor: bdeliveryColor,
+                  bdeliveryWidth: bdeliveryWidth,
+                  bdeliveryStyle: 'solid',
+                }"
+                class="status-dot w-1 h-4 rounded-full"
+              </div>
+              <span :class="statusColorText" class="ml-2 text-md ">{{
+                inputValue
+              }}</span>
+            
+            </div>
+          </Badge>
+        </div>
+
+          <!-- <div :class="['flex items-center ', statusBorColor]" class="pl-5">
+            <div
+              :style="{
+                backgroundColor: statusColor,
+                bdeliveryColor: bdeliveryColor,
+                bdeliveryWidth: bdeliveryWidth,
+                bdeliveryStyle: 'solid',
+              }"
+              class="status-dot"
+            ></div>
             <span :class="statusColorText">{{ inputValue }}</span>
+          </div> -->
+          <div class="flex justify-end space-x-4 pt-4"></div>
+        </div>
+        <div class="">
+          <div
+            class="flex items-center gap-2 leading-5 first:mt-3 grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4"
+          >
+            <div class="shadow rounded-md p-5 min-h-72">
+              <div
+                class="text-gray-700 mb-5 ml-2 flex h-7 max-w-fit cursor-pointer items-center gap-2 pl-2 pr-3 text-base font-semibold leading-5"
+              >
+                Details:
+              </div>
+              <div
+                class="flex items-center gap-2 px-3 leading-5 first:mt-1 bdelivery-b pb-1"
+              >
+                <div class="sm: w-36 shrink-0 text-sm text-gray-600 text-left">
+                  Purpose
+                </div>
+                <div
+                  class="grid min-h-[18px] flex-1 items-center text-base text-center"
+                >
+                {{ purpose }}
+                </div>
+              </div>
+              <div
+                class="flex items-center gap-2 px-3 leading-5 first:mt-3 text-center mt-3 bdelivery-b pb-1"
+              >
+                <div class="sm: w-36 shrink-0 text-sm text-gray-600 text-left">
+               Transaction Date:
+                </div>
+                <div
+                  class="grid min-h-[18px] flex-1 items-center overflow-hidden text-base text-center"
+                >
+                 {{ transactionDate }}
+                </div>
+              </div>
+              <div
+                class="flex items-center gap-2 px-3 leading-5 first:mt-3 text-center mt-3 bdelivery-b pb-1"
+              >
+                <div class="sm: w-36 shrink-0 text-sm text-gray-600 text-left">
+                  Required By
+                </div>
+                <div
+                  class="grid min-h-[18px] flex-1 items-center overflow-hidden text-base text-center"
+                >
+                  {{ requiredDate }}
+                </div>
+              </div>
+              <div
+                class="flex items-center gap-2 px-3 leading-5 first:mt-3 text-center mt-3 bdelivery-b pb-1"
+              >
+                <div class="sm: w-36 shrink-0 text-sm text-gray-600 text-left">
+                 
+                </div>
+                <div
+                  class="grid min-h-[18px] flex-1 items-center overflow-hidden text-base text-center"
+                >
+                
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        </div>
+      
+
+        <div class="bg-white shadow-md rounded-lg p-5 my-6">
+          <div
+            class="text-gray-700 mb-1 ml-2 flex h-7 max-w-fit cursor-pointer items-center gap-2 pl-2 pr-3 text-base font-semibold leading-5"
+          >
+            Items:
           </div>
+          <div class="bdelivery-b pb-4">
+           
+          </div>
+          
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-6"></div>
           <table class="min-w-full divide-y divide-gray-200">
             <thead>
               <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th>
-                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
-                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Rate</th>
-                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Item
+                </th>
+                <th
+                  class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Quantity
+                </th>
+                <th
+                  class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Warehouse
+                </th>
+                <th
+                  class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  S
+                </th>
+                <th
+                  class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Rate(INR)
+                </th>
+                <th
+                  class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Amount(INR)
+                </th>
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
               <tr v-for="(row, index) in itemValue" :key="index">
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ row.item_name }}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">{{ row.qty }}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">{{ row.rate }}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-right">{{ row.amount }}</td>
-              </tr>
-              <tr>
-                <td colspan="3" class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">Grand Total</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-right">{{ totalValue }}</td>
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
+                >
+                  {{ row.item_name }}
+                </td>
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center"
+                >
+                  {{ row.qty }}
+                </td>
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right"
+                >
+                  {{ row.rate }}
+                </td>
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-sm font-medium text-right"
+                >
+                  {{ row.amount }}
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
+        
       </div>
     </div>
   </div>
@@ -223,7 +208,7 @@ export default {
 <script>
 import LeftSidebar from '@/components/Custom Layout/LeftSidebar.vue'
 import { ref, watch, onMounted, computed } from 'vue'
-import { createResource, Breadcrumbs, Button } from 'frappe-ui'
+import { createResource, Breadcrumbs, Button, Badge } from 'frappe-ui'
 import { useRouter, useRoute } from 'vue-router'
 
 export default {
@@ -231,6 +216,7 @@ export default {
     LeftSidebar,
     Breadcrumbs,
     Button,
+    Badge,
   },
   setup() {
     const router = useRouter()
@@ -238,9 +224,25 @@ export default {
 
     const isSidebarCollapsed = ref(false)
     const name = ref('')
+    const addressLine1 = ref([])
+    const addressLine2 = ref([])
     const inputValue = ref('')
+    const purpose = ref([])
     const itemValue = ref([])
+    const actual = ref([])
     const totalValue = ref([])
+    const grandValue = ref([])
+    const totalactual = ref([])
+    const transactionDate = ref([])
+    const customerName = ref([])
+    const city = ref([])
+    const country = ref([])
+    const phone = ref([])
+    const state = ref([])
+    const warehouse = ref([])
+    const stock = ref([])
+    const requiredDate = ref([])
+    const quotationTo = ref([])
     const material = createResource({
       url: 'go1_customer.go1_customer.api.api.get_material_request',
       method: 'get',
@@ -251,19 +253,29 @@ export default {
       { label: '', route: {} },
     ])
 
-    const fetchmaterialreqDetails = async () => {
+    const fetchmat_req = async () => {
       try {
         const id = route.params.id
         const data = await material.fetch()
-        const materialreqDetails = data.find((item) => item.name === id)
-        if (materialreqDetails) {
-          name.value = materialreqDetails.name
-          inputValue.value = materialreqDetails.status
-          itemValue.value = materialreqDetails.items || []
-          totalValue.value = materialreqDetails.total
+        console.log('data', data)
+        const mat_req = data.find((item) => item.name === id)
+
+        if (mat_req) {
+          name.value = mat_req.title
+          inputValue.value = mat_req.status
+          itemValue.value = mat_req.items || []
+          purpose.value = mat_req.material_request_type
+          actual.value = mat_req.actual_qty || []
+          grandValue.value = mat_req.rounded_total
+          warehouse.value = mat_req.warehouse
+          stock.value = mat_req.stock_qty
+          totalValue.value = mat_req.total
+          quotationTo.value = mat_req.quotation_to
+          transactionDate.value = mat_req.transaction_date
+          requiredDate.value = mat_req.schedule_date
         }
       } catch (error) {
-        console.error('Error fetching order details:', error)
+        console.error('Error fetching delivery details:', error)
       }
     }
 
@@ -276,17 +288,16 @@ export default {
     })
 
     onMounted(() => {
-      fetchmaterialreqDetails()
+      fetchmat_req()
     })
 
-    // Computed properties to determine the status color
     const statusColor = computed(() => {
       switch (inputValue.value.toLowerCase()) {
         case 'draft':
           return 'red'
-        case 'ordered':
+        case 'deliveryed':
           return 'green'
-        case 'partially ordered':
+        case 'partially deliveryed':
           return 'yellow'
         case 'lost':
           return 'red'
@@ -302,56 +313,72 @@ export default {
     const statusColorText = computed(() => {
       switch (inputValue.value.toLowerCase()) {
         case 'draft':
-          return 'text-red-400'
-        case 'ordered':
-          return 'text-green-400'
-        case 'partially ordered':
-          return 'text-yellow-400'
+          return 'text-red-700'
+        case 'deliveryed':
+          return 'text-green-700'
+        case 'partially deliveryed':
+          return 'text-yellow-700'
         case 'lost':
-          return 'text-red-400'
+          return 'text-red-700'
         case 'cancelled':
-          return 'text-red-600'
+          return 'text-red-700'
         case 'expired':
-          return 'text-gray-600'
+          return 'text-gray-700'
         default:
-          return 'text-gray-300'
+          return 'text-gray-700'
       }
     })
 
     const statusBorColor = computed(() => {
       switch (inputValue.value.toLowerCase()) {
         case 'draft':
-          return 'border-red-400'
-        case 'ordered':
-          return 'border-green-400'
-        case 'partially ordered':
-          return 'border-yellow-400'
+          return 'bdelivery-red-400'
+        case 'deliveryed':
+          return 'bdelivery-green-400'
+        case 'partially deliveryed':
+          return 'bdelivery-yellow-400'
         case 'lost':
-          return 'border-red-400'
+          return 'bdelivery-red-400'
         case 'cancelled':
-          return 'border-red-600'
+          return 'bdelivery-red-600'
         case 'expired':
-          return 'border-gray-600'
+          return 'bdelivery-gray-600'
         default:
-          return 'border-gray-300'
+          return 'bdelivery-gray-300'
       }
     })
 
-    // Dynamically set border width for the status dot
-    const borderWidth = computed(() => 'auto')
+    // Dynamically set bdelivery width for the status dot
+    const bdeliveryWidth = computed(() => 'auto')
 
     return {
       isSidebarCollapsed,
       name,
+      stock,
       inputValue,
+      addressLine1,
       itemValue,
+      actual,
+      customerName,
       totalValue,
+      transactionDate,
+      quotationTo,
+      totalactual,
+      grandValue,
       toggleSidebar,
+      purpose,
       breadcrumbsList,
+      requiredDate,
       statusColor,
       statusColorText,
       statusBorColor,
-      borderWidth
+      bdeliveryWidth,
+      addressLine2,
+      city,
+      country,
+      phone,
+      state,
+      warehouse,
     }
   },
 }
@@ -391,7 +418,10 @@ export default {
 .status-dot {
   width: 10px;
   height: 10px;
-  border-radius: 50%;
-  border-width: var(--border-width, 2px); /* Use dynamic border width */
+  bdelivery-radius: 50%;
+  bdelivery-width: var(
+    --bdelivery-width,
+    2px
+  ); /* Use dynamic bdelivery width */
 }
 </style>

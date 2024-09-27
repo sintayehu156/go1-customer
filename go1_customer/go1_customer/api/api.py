@@ -4,49 +4,163 @@ from frappe import _
 @frappe.whitelist()
 def get_quotation():
     users_data = getcustomer()
+
+   
     quotations = frappe.db.get_all("Quotation", fields=['*'], filters={'party_name': ['in', users_data]})
-    quotation_items = frappe.db.get_all("Quotation Item", fields=["*"])
+    
     quotation_docs = []
 
     for quotation in quotations:
-        items = []
-        for item in quotation_items:
-            if item["parent"] == quotation["name"]:
-                items.append(item)
+       
+        items = frappe.db.get_all("Quotation Item", fields=["*"], filters={"parent": quotation["name"]})
+        taxes = frappe.db.get_all("Sales Taxes and Charges", fields=["*"], filters={"parent": quotation["name"]})
+       
         quotation["items"] = items
+        quotation["taxes"] = taxes
+
+        
+        quotation['grand_total'] = frappe.utils.fmt_money(quotation.get('grand_total'), currency=quotation.get('currency'))
+        quotation['total'] = frappe.utils.fmt_money(quotation.get('total'), currency=quotation.get('currency'))
+        quotation['rounded_total'] = frappe.utils.fmt_money(quotation.get('rounded_total'), currency=quotation.get('currency'))
+        quotation['total_taxes_and_charges'] = frappe.utils.fmt_money(quotation.get('total_taxes_and_charges'), currency=quotation.get('currency'))
+
+        
+        quotation['transaction_date'] = frappe.utils.formatdate(quotation.get('transaction_date'), "dd-MM-yyyy")
+        quotation['valid_till'] = frappe.utils.formatdate(quotation.get('valid_till'), "dd-MM-yyyy")
+
+       
+        for item in quotation['items']:
+            item['rate'] = frappe.utils.fmt_money(item['rate'], currency=quotation.get('currency'))
+            item['amount'] = frappe.utils.fmt_money(item['amount'], currency=quotation.get('currency'))
+
+        for tax in quotation['taxes']:
+            tax['rate'] = frappe.utils.fmt_money(tax.get('rate', 0), currency=quotation.get('currency'))
+            tax['tax_amount'] = frappe.utils.fmt_money(tax.get('tax_amount', 0), currency=quotation.get('currency'))
+            tax['total'] = frappe.utils.fmt_money(tax.get('total', 0), currency=quotation.get('currency'))
+
+        
+        if quotation.get('customer_address'):
+            address = frappe.get_doc('Address', quotation['customer_address'])
+            quotation['address_line1'] = address.address_line1
+            quotation['address_line2'] = address.address_line2
+            quotation['city'] = address.city
+            quotation['country'] = address.country
+            quotation['state'] = address.state
+            quotation['phone'] = address.phone
+            quotation['pincode'] = address.pincode
+       
         quotation_docs.append(quotation)
 
     return quotation_docs
+
+
 
 @frappe.whitelist()
 def get_salesorder():
     users_data = getcustomer()
     salesorders = frappe.db.get_all("Sales Order", fields=['*'], filters={'customer': ['in', users_data]})
     salesorder_items = frappe.db.get_all("Sales Order Item", fields=["*"])
+    salesorder_taxes = frappe.db.get_all("Sales Taxes and Charges", fields=["*"])
     salesorder_docs = []
-    for salesorder in salesorders:
+
+    for salesinvoice in salesorders:
         items = []
+        taxes = []  
         for item in salesorder_items:
-            if item["parent"] == salesorder["name"]:
+            if item["parent"] == salesinvoice["name"]:
                 items.append(item)
-        salesorder["items"] = items
-        salesorder_docs.append(salesorder)
+        for tax_item in salesorder_taxes: 
+            if tax_item["parent"] == salesinvoice["name"]:
+                taxes.append(tax_item)
+
+        salesinvoice["items"] = items 
+        salesinvoice["taxes"] = taxes  
+        salesorder_docs.append(salesinvoice)
+
+    for sales in salesorder_docs:
+        sales['grand_total'] = frappe.utils.fmt_money(sales.get('grand_total'), currency=sales.get('currency'))    
+        sales['total'] = frappe.utils.fmt_money(sales.get('total'), currency=sales.get('currency'))
+        sales['transaction_date'] = frappe.utils.formatdate(sales.get('transaction_date'), "dd-MM-yyyy")  
+        sales['due_date'] = frappe.utils.formatdate(sales.get('due_date'), "dd-MM-yyyy")    
+        sales['rounded_total'] = frappe.utils.fmt_money(sales.get('rounded_total'), currency=sales.get('currency'))
+        sales['total_taxes_and_charges'] = frappe.utils.fmt_money(sales.get('total_taxes_and_charges'), currency=sales.get('currency'))   
+
+
+       
+        for item in sales['items']:
+            item['rate'] = frappe.utils.fmt_money(item['rate'], currency=sales.get('currency'))
+            item['amount'] = frappe.utils.fmt_money(item['amount'], currency=sales.get('currency'))
+
+        for tax in sales['taxes']:
+            tax['rate'] = frappe.utils.fmt_money(tax.get('rate', 0), currency=sales.get('currency'))
+            tax['tax_amount'] = frappe.utils.fmt_money(tax.get('tax_amount', 0), currency=sales.get('currency'))
+            tax['total'] = frappe.utils.fmt_money(tax.get('total', 0), currency=sales.get('currency'))
+        
+        if sales.get('customer_address'):
+            address = frappe.get_doc('Address', sales['customer_address'])
+            sales['address_line1'] = address.address_line1
+            sales['address_line2'] = address.address_line2
+            sales['city'] = address.city
+            sales['country'] = address.country
+            sales['state'] = address.state
+            sales['phone'] = address.phone
+            sales['pincode'] = address.pincode
+
     return salesorder_docs
+
+
 
 @frappe.whitelist()
 def get_salesinvoice():
     user_data = getcustomer()
-    salesinvoices = frappe.db.get_all("Sales Invoice", fields=['*'],filters={'customer': ['in', user_data]})
+    salesinvoices = frappe.db.get_all("Sales Invoice", fields=['*'], filters={'customer': ['in', user_data]})
     salesinvoice_items = frappe.db.get_all("Sales Invoice Item", fields=["*"])
+    salesinvoice_taxes = frappe.db.get_all("Sales Taxes and Charges", fields=["*"])
     salesinvoices_docs = []
-    for salesorder in salesinvoices:
+
+    for salesinvoice in salesinvoices:
         items = []
+        taxes = []  
         for item in salesinvoice_items:
-            if item["parent"] == salesorder["name"]:
+            if item["parent"] == salesinvoice["name"]:
                 items.append(item)
-        salesorder["items"] = items
-        salesinvoices_docs.append(salesorder)
+        for tax_item in salesinvoice_taxes: 
+            if tax_item["parent"] == salesinvoice["name"]:
+                taxes.append(tax_item)
+
+        salesinvoice["items"] = items
+        salesinvoice["taxes"] = taxes
+        salesinvoices_docs.append(salesinvoice)
+
+    for sales in salesinvoices_docs:
+        sales['grand_total'] = frappe.utils.fmt_money(sales.get('grand_total'), currency=sales.get('currency')) 
+        sales['total'] = frappe.utils.fmt_money(sales.get('total'), currency=sales.get('currency'))       
+        sales['posting_date'] = frappe.utils.formatdate(sales.get('posting_date'), "dd-MM-yyyy")  
+        sales['due_date'] = frappe.utils.formatdate(sales.get('due_date'), "dd-MM-yyyy")   
+        sales['rounded_total'] = frappe.utils.fmt_money(sales.get('rounded_total'), currency=sales.get('currency'))
+        sales['total_taxes_and_charges'] = frappe.utils.fmt_money(sales.get('total_taxes_and_charges'), currency=sales.get('currency'))   
+
+        for item in sales['items']:
+            item['rate'] = frappe.utils.fmt_money(item['rate'], currency=sales.get('currency'))
+            item['amount'] = frappe.utils.fmt_money(item['amount'], currency=sales.get('currency'))
+
+        for tax in sales['taxes']:
+            tax['rate'] = frappe.utils.fmt_money(tax.get('rate', 0), currency=sales.get('currency'))
+            tax['tax_amount'] = frappe.utils.fmt_money(tax.get('tax_amount', 0), currency=sales.get('currency'))
+            tax['total'] = frappe.utils.fmt_money(tax.get('total', 0), currency=sales.get('currency'))
+        
+        if sales.get('customer_address'):
+            address = frappe.get_doc('Address', sales['customer_address'])
+            sales['address_line1'] = address.address_line1
+            sales['address_line2'] = address.address_line2
+            sales['city'] = address.city
+            sales['country'] = address.country
+            sales['state'] = address.state
+            sales['phone'] = address.phone
+            sales['pincode'] = address.pincode
+
     return salesinvoices_docs
+
 
 @frappe.whitelist()
 def get_issues():
@@ -56,17 +170,57 @@ def get_issues():
 @frappe.whitelist()
 def get_shipments():
    users_data = getcustomer()
-   deliverynote = frappe.db.get_all("Delivery Note", fields=['*'],filters={'customer':['in',users_data]})
+   deliverynote = frappe.db.get_all("Delivery Note", fields=['*'], filters={'customer': ['in', users_data]})
    deliverynote_items = frappe.db.get_all("Delivery Note Item", fields=["*"])
+   deliverynote_taxes = frappe.db.get_all("Sales Taxes and Charges", fields=["*"]) 
    deliverynote_docs = []
+   
    for dn in deliverynote:
        items = []
+       taxes = [] 
+       
        for item in deliverynote_items:
            if item["parent"] == dn["name"]:
                items.append(item)
+       
+       for tax_item in deliverynote_taxes:
+           if tax_item["parent"] == dn["name"]:
+               taxes.append(tax_item)
+       
        dn["items"] = items
-       deliverynote_docs.append(dn)
+       dn["taxes"] = taxes  
+       deliverynote_docs.append(dn)  
+   
+   for delivery in deliverynote_docs:
+       delivery['grand_total'] = frappe.utils.fmt_money(delivery.get('grand_total'), currency=delivery.get('currency'))    
+       delivery['posting_date'] = frappe.utils.formatdate(delivery.get('posting_date'), "dd-MM-yyyy")  
+       delivery['total'] = frappe.utils.fmt_money(delivery.get('total'), currency=delivery.get('currency'))       
+       delivery['rounded_total'] = frappe.utils.fmt_money(delivery.get('rounded_total'), currency=delivery.get('currency'))
+       delivery['total_taxes_and_charges'] = frappe.utils.fmt_money(delivery.get('total_taxes_and_charges'), currency=delivery.get('currency'))   
+
+  
+       
+       for item in delivery['items']:
+           item['rate'] = frappe.utils.fmt_money(item['rate'], currency=delivery.get('currency'))
+           item['amount'] = frappe.utils.fmt_money(item['amount'], currency=delivery.get('currency'))
+
+       for tax in delivery['taxes']:
+            tax['rate'] = frappe.utils.fmt_money(tax.get('rate', 0), currency=delivery.get('currency'))
+            tax['tax_amount'] = frappe.utils.fmt_money(tax.get('tax_amount', 0), currency=delivery.get('currency'))
+            tax['total'] = frappe.utils.fmt_money(tax.get('total', 0), currency=delivery.get('currency'))
+        
+       if delivery.get('customer_address'):
+            address = frappe.get_doc('Address', delivery['customer_address'])
+            delivery['address_line1'] = address.address_line1
+            delivery['address_line2'] = address.address_line2
+            delivery['city'] = address.city
+            delivery['country'] = address.country
+            delivery['state'] = address.state
+            delivery['phone'] = address.phone
+            delivery['pincode'] = address.pincode
+   
    return deliverynote_docs
+
 
 @frappe.whitelist()
 def get_material_request():
@@ -80,6 +234,13 @@ def get_material_request():
                 items.append(item)
         mr["items"] = items
         materialreq_docs.append(mr)
+    for material in materialreq_docs:
+       material['grand_total'] = frappe.utils.fmt_money(material.get('grand_total'), currency=material.get('currency'))    
+       material['transaction_date'] = frappe.utils.formatdate(material.get('transaction_date'), "dd-MM-yyyy")
+       material['schedule_date'] = frappe.utils.formatdate(material.get('schedule_date'), "dd-MM-yyyy")    
+       for item in material['items']:
+            item['rate'] = frappe.utils.fmt_money(item['rate'], currency=material.get('currency'))
+            item['amount'] = frappe.utils.fmt_money(item['amount'], currency=material.get('currency'))
     return materialreq_docs
 
 @frappe.whitelist()
@@ -127,4 +288,33 @@ def getcustomer():
 
     return customers_details
 
+
+@frappe.whitelist()
+def gettest():
+    quotations = frappe.db.get_all("Quotation", fields=['*'])
+    for row in quotations:
+        row['items'] = frappe.get_all("Quotation Item",
+                        fields=['*'],
+                        filters={'parent':row.name},order_by='creation desc')
+    return quotations
+
+
+@frappe.whitelist()
+def get_address():
+    users_data = getcustomer()
+    address_list = []
+    addresses = frappe.db.get_all("Address", fields=['*'])
+
+    for address in addresses:
+        links = frappe.db.get_all("Dynamic Link", fields=['*'], filters={'parent': address['name']})
+        address['links'] = links
+        address_list.append(address) 
+
+    address_data = []
+    for address in address_list:
+        for link in address['links']:
+            if link['link_name'] in users_data:
+                address_data.append(address)
+
+    return address_data
 

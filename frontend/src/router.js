@@ -20,7 +20,7 @@ const routes = [
   },
   {
     name: 'material_request',
-    path: '/Material Request',
+    path: '/Material_Request',
     component: () => import('@/pages/Material Request.vue'),
   },
   { path: '/orders',
@@ -32,9 +32,24 @@ const routes = [
     component: () => import('@/pages/Issues.vue'),
   },
   {
+    name: 'issueNew',
+    path: '/Issue_new',
+    component: () => import('@/pages/Issues New.vue'),
+  },
+  {
+    name: 'addressNew',
+    path: '/address_new',
+    component: () => import('@/pages/Address New.vue'),
+  },
+  {
     name: 'IssueDetails',
     path: '/Issues/:id',
     component: () => import('@/pages/Issues Detail.vue'),
+  },
+  {
+    name: 'AddressDetails',
+    path: '/Addresses/:id',
+    component: () => import('@/pages/Address Detail.vue'),
   },
   {
     name: 'addresses',
@@ -76,15 +91,20 @@ const routes = [
       component: () => import ('@/pages/Shipment Details.vue')
     },
     {
-      path: '/Material Request/:id',
+      path: '/Material_Request/:id',
       name:'MaterialRDetails',
       component:() => import ('@/pages/Material Request Details.vue')
+    },
+    {
+      path: '/Dashboard',
+      name:'dashboard',
+      component:() => import ('@/pages/Dashboards.vue')
     }
 
 ]
 
 let router = createRouter({
-  history: createWebHistory('/Go1Customer'),
+  history: createWebHistory('/go1-customer'),
   routes,
 })
 

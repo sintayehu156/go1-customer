@@ -31,7 +31,7 @@
               placeholder="Placeholder"
               :disabled="false"
               label="Label"
-              v-model="inputValue"
+              v-model="status"
             />
           </div>
         </div>
@@ -58,7 +58,7 @@ export default {
 
     const isSidebarCollapsed = ref(false);
     const name = ref('');
-    const inputValue = ref('');
+    const status = ref('');
 
     const order = createResource({
       url: '/api/method/frappe.client.get_list',
@@ -75,7 +75,7 @@ export default {
         const issuedetails = data.find(item => item.name === id);
         if (issuedetails) {
           name.value = issuedetails.name;
-          inputValue.value = issuedetails.status; 
+          status.value = issuedetails.status; 
         }
         console.log('Fetched order details:', issuedetails);
       } catch (error) {
@@ -94,7 +94,7 @@ export default {
     return {
       isSidebarCollapsed,
       name,
-      inputValue,
+      status,
       toggleSidebar,
     };
   },
@@ -153,98 +153,117 @@ export default {
           class="border-b bg-white px-5 py-6.5 pb-[2.625rem] sm:px-5 mb-12"
         >
           <Breadcrumbs :items="breadcrumbsList" class="float-left" />
-          <!-- <Button
-            :variant="'solid'"
-            theme="gray"
-            size="sm"
-            label="Button"
-            :loading="false"
-            :loadingText="null"
-            :disabled="false"
-            :link="null"
-            class="float-right"
-          >
-          
-          </Button> -->
         </header>
       </div>
     </div>
     <div :class="['layout', { collapsed: isSidebarCollapsed }]">
       <LeftSidebar :isCollapsed="isSidebarCollapsed" @toggle="toggleSidebar" />
       <div class="main-content">
-        <div class="bg-white shadow-md rounded-lg p-6 space-y-6">
-          <!-- Section 1: Form Title -->
-          <div class="border-b pb-7 pt-10">
-            <p
-              class="text-9xl font-bold text-gray-800 float-left -mt-2"
-              style="font-size: 1.85rem"
-            >
-              Issue
-            </p>
-            <Button
-              :variant="'solid'"
-              theme="gray"
-              size="sm"
-              label="Edit"
-              :disabled="false"
-              class="float-right mb-4"
-            /><br />
-            <p
-              class="text-9xl font-bold text-gray-600 mt-4"
-              style="font-size: 1rem"
-            >
+        <div class="bg-white shadow-md rounded-lg p-6 space-y-6  pb-[2.625rem]">
+          <div
+            class="float-left mb-1 text-9xl font-bold text-gray-800 -mt-2"
+            style="font-size: 1.85rem"
+          >
+            <p>Issue</p>
+            <p class="text-9xl font-bold text-gray-600" style="font-size: 1rem">
               {{ subject }}
             </p>
-
-            <div class="flex justify-end space-x-4 pt-4"></div>
           </div>
+          <div class="float-right mb-1">
+            <Button
+              v-if="!isEditing"
+              :variant="'solid'"
+              theme="gray"
+              size="md"
+              label="Edit"
+              :disabled="false"
+              @click="startEditing"
+              class=""
+            />
+          </div>
+          <div class="border-b pb-7 pt-10"></div>
           <div class="p-2">
             <FormControl
               :type="'text'"
-              size="sm"
+              size="md"
               variant="subtle"
-              placeholder="Placeholder"
-              :disabled="false"
-              label="Label"
-              v-model="inputValue"
+              placeholder="subject"
+              :disabled="!isEditing"
+              label="Subject"
+              v-model="subject"
+              class="mb-5"
             />
             <FormControl
-              :type="'text'"
-              size="sm"
+              :type="'select'"
+              size="md"
+              :options="statusOptions"
               variant="subtle"
-              placeholder="Placeholder"
-              :disabled="false"
-              label="Label"
-              v-model="inputValue"
+              placeholder="status"
+              :disabled="!isEditing"
+              label="Status"
+              v-model="status"
+              class="mb-5 text-gray-1000 text-base"
             />
             <FormControl
-              :type="'text'"
-              size="sm"
+              :type="'select'"
+              size="md"
               variant="subtle"
-              placeholder="Placeholder"
-              :disabled="false"
-              label="Label"
-              v-model="inputValue"
+              :options="customOption"
+              :disabled="!isEditing"
+              label="Customer"
+              v-model="customer"
+              class="mb-5"
             />
             <FormControl
               :type="'textarea'"
-              size="sm"
+              size="md"
               variant="subtle"
               placeholder="Placeholder"
-              :disabled="false"
-              label="Label"
-              v-model="inputValue"
+              :disabled="!isEditing"
+              label="Description"
+              v-model="description"
+              class="mb-5"
             />
+            <FormControl
+              type="select"
+              size="md"
+              variant="subtle"
+              :options="priorityOption"
+              placeholder="Placeholder"
+              :disabled="!isEditing"
+              label="Priority"
+              v-model="priority"
+              class="mb-5"
+            />
+            <div v-if="isEditing" class="float-right flex gap-4 ">
+              <Button
+                :variant="'subtle'"
+                theme="gray"
+                size="md"
+                label="Discard"
+                :disabled="false"
+                @click="cancelEditing"
+              />
+              <Button
+                :variant="'solid'"
+                theme="gray"
+                size="md"
+                label="Submit"
+                :disabled="false"
+                @click="submitChanges"
+              />
+            </div>
           </div>
+
         </div>
       </div>
     </div>
   </div>
 </template>
-  
-  <script>
+
+<script>
 import LeftSidebar from '@/components/Custom Layout/LeftSidebar.vue'
-import { ref, watch, onMounted, computed } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { createResource, Breadcrumbs, Button, FormControl } from 'frappe-ui'
 import { useRouter, useRoute } from 'vue-router'
 
@@ -260,11 +279,16 @@ export default {
     const route = useRoute()
 
     const isSidebarCollapsed = ref(false)
+    const isEditing = ref(false)
     const name = ref('')
-    const inputValue = ref('')
-    const itemValue = ref([])
-    const totalValue = ref([])
-    const subject = ref([])
+    const status = ref('')
+    const description = ref('')
+    const priority = ref('')
+    const customer = ref('')
+    const subject = ref('')
+    const customOption = ref([])
+    const priorityOption = ref([])
+
     const issues = createResource({
       url: 'go1_customer.go1_customer.api.api.get_issues',
       method: 'get',
@@ -272,23 +296,99 @@ export default {
 
     const breadcrumbsList = ref([
       { label: 'Issues', route: { name: 'issue' } },
-      { label: '', route: {} },
+      { label: 'New', route: {} },
     ])
 
-    const fetchissuedetails = async () => {
+    const statusOptions = [
+      { label: 'Open', value: 'Open' },
+      { label: 'Closed', value: 'Closed' },
+      { label: 'Replied', value: 'Replied' },
+      { label: 'On Hold', value: 'On Hold' },
+      { label: 'Resolved', value: 'Resolved' },
+    ]
+
+    const fetchIssueDetails = async () => {
       try {
         const id = route.params.id
         const data = await issues.fetch()
-        const issuedetails = data.find((item) => item.name === id)
-        if (issuedetails) {
-          name.value = issuedetails.name
-          subject.value = issuedetails.subject
-          inputValue.value = issuedetails.status
-          itemValue.value = issuedetails.items || []
-          totalValue.value = issuedetails.total
+        const issueDetails = data.find((item) => item.name === id)
+        if (issueDetails) {
+          name.value = issueDetails.name
+          subject.value = issueDetails.subject
+          status.value = issueDetails.status
+          description.value = issueDetails.description.replace(
+            /<\/?[^>]+>/gi,
+            ''
+          )
+          customer.value = issueDetails.customer
+          priority.value = issueDetails.priority
         }
       } catch (error) {
-        console.error('Error fetching invoice details:', error)
+        console.error('Error fetching issue details:', error)
+      }
+    }
+
+    const startEditing = () => {
+      isEditing.value = true
+    }
+
+    const cancelEditing = () => {
+      isEditing.value = false
+      fetchIssueDetails()
+    }
+
+    const submitChanges = async () => {
+      const issueId = route.params.id
+      if (!issueId) return
+
+      const issueData = {
+        subject: subject.value,
+        status: status.value,
+        priority: priority.value,
+        description: description.value,
+        customer: customer.value,
+      }
+
+      try {
+        const response = await fetch(`/api/resource/Issue/${issueId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(issueData),
+        })
+
+        if (!response.ok) throw new Error('Error updating issue')
+        isEditing.value = false
+        router.push({ name: 'issue' })
+      } catch (error) {
+        console.error('Error updating issue:', error)
+      }
+    }
+
+    const optionsCustomer = async () => {
+      try {
+        const response = await fetch('/api/resource/Customer?fields=["name"]')
+        if (!response.ok) throw new Error('Network response was not ok')
+
+        const customerdata = await response.json()
+        customOption.value = customerdata.data.map((users) => users.name) || []
+      } catch (error) {
+        console.error('Error fetching customers:', error)
+      }
+    }
+
+    const optionsPriority = async () => {
+      try {
+        const response = await fetch(
+          '/api/resource/Issue Priority?fields=["name"]'
+        )
+        if (!response.ok) throw new Error('Network response was not ok')
+
+        const prioritydata = await response.json()
+        priorityOption.value =
+          prioritydata.data.map((users) => users.name) || []
+        console.log('pr', prioritydata)
+      } catch (error) {
+        console.error('Error fetching customers:', error)
       }
     }
 
@@ -300,89 +400,35 @@ export default {
       breadcrumbsList.value[1].label = newName
     })
 
-    onMounted(() => {
-      fetchissuedetails()
+    onMounted(async () => {
+      await fetchIssueDetails()
+      await optionsCustomer()
+      await optionsPriority()
     })
-
-    // Computed properties to determine the status color
-    const statusColor = computed(() => {
-      switch (inputValue.value.toLowerCase()) {
-        case 'draft':
-          return 'red'
-        case 'ordered':
-          return 'green'
-        case 'partially ordered':
-          return 'yellow'
-        case 'lost':
-          return 'red'
-        case 'cancelled':
-          return 'red'
-        case 'expired':
-          return 'gray'
-        default:
-          return 'gray'
-      }
-    })
-
-    const statusColorText = computed(() => {
-      switch (inputValue.value.toLowerCase()) {
-        case 'draft':
-          return 'text-red-400'
-        case 'ordered':
-          return 'text-green-400'
-        case 'partially ordered':
-          return 'text-yellow-400'
-        case 'lost':
-          return 'text-red-400'
-        case 'cancelled':
-          return 'text-red-600'
-        case 'expired':
-          return 'text-gray-600'
-        default:
-          return 'text-gray-300'
-      }
-    })
-
-    const statusBorColor = computed(() => {
-      switch (inputValue.value.toLowerCase()) {
-        case 'draft':
-          return 'border-red-400'
-        case 'ordered':
-          return 'border-green-400'
-        case 'partially ordered':
-          return 'border-yellow-400'
-        case 'lost':
-          return 'border-red-400'
-        case 'cancelled':
-          return 'border-red-600'
-        case 'expired':
-          return 'border-gray-600'
-        default:
-          return 'border-gray-300'
-      }
-    })
-
-    // Dynamically set border width for the status dot
-    const borderWidth = computed(() => 'auto')
-
     return {
       isSidebarCollapsed,
+      priorityOption,
+      isEditing,
       name,
-      inputValue,
+      status,
       subject,
-      itemValue,
-      totalValue,
+      description,
+      priority,
+      customer,
+      customOption,
       toggleSidebar,
       breadcrumbsList,
-      statusColor,
-      statusColorText,
-      statusBorColor,
-      borderWidth,
+      statusOptions,
+      optionsCustomer,
+      optionsPriority,
+      startEditing,
+      cancelEditing,
+      submitChanges,
     }
   },
 }
 </script>
-  
+
   <style scoped>
 .head-layout {
   display: flex;
@@ -392,7 +438,7 @@ export default {
 .layout {
   display: flex;
   width: 100%;
-  height: 100vh;
+  height: 120vh;
   transition: margin-left 0.3s ease;
 }
 
@@ -419,6 +465,11 @@ export default {
   height: 10px;
   border-radius: 50%;
   border-width: var(--border-width, 2px); /* Use dynamic border width */
+}
+@media (max-width: 250px) {
+  .main-content {
+    margin-left: 60px;
+  }
 }
 </style>
   

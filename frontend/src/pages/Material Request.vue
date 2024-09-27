@@ -8,8 +8,22 @@
       </div>
     </div>
     <div :class="['layout', { collapsed: isSidebarCollapsed }]">
-      <LeftSidebar :isCollapsed="isSidebarCollapsed" @toggle="toggleSidebar" />
+      <LeftSidebar class="z-[8]" :isCollapsed="isSidebarCollapsed" @toggle="toggleSidebar" />
       <div class="main-content">
+
+        <div class="fiter mb-2 flex gap-3">
+          <TextInput type="search" size="sm" variant="subtle" placeholder="Name" v-model="filterName" />         
+          <FormControl type="select"
+            :options="[
+              {},
+              { label: 'Draft',value: 'Draft',}, { label: 'Submitted',value: 'Submitted',}, { label: 'Stopped',value: 'Stopped',},
+              { label: 'Partially Ordered',value: 'Partially Ordered',},   { label: 'Pending',value: 'Pending',},   { label: 'Cancelled',value: 'Cancelled',},
+              { label: 'Issued',value: 'Issued',},   { label: 'Transferred',value: 'Transferred',},   { label: 'Received',value: 'Received',},             
+              { label: 'Partially Received',value: 'Partially Received',}, { label: 'Ordered',value: 'Ordered',},                 
+            ]"
+            size="sm" variant="subtle" placeholder="Status" v-model="filterStatus" class="w-52" />         
+            <DatePicker class="border-none" size="md" variant="subtle" placeholder="Date" v-model="filterDate"/>
+        </div>
         <ListView
         class="h-[500px]"
           :columns="columns"
@@ -25,8 +39,21 @@
           }"
           row-key="name"
           @row-click="OpenClick"
-        />
-        <Pagination :rows="rows" @update:paginatedRows="updatePaginatedRows" /> 
+        >
+        <template #cell="{ item, column }">
+            <div v-if="column.key === 'status'">
+              <Badge
+                v-bind="getStatusTheme(item)"
+                size="sm"
+                :label="item"
+              />
+            </div>
+            <div v-else>
+              <span class="font-medium text-gray-700 text-base" style="max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block;">{{ item }}</span>
+            </div>
+          </template>
+        </ListView>
+        <Pagination :rows="filteredRows" @update:paginatedRows="updatePaginatedRows" /> 
       </div>
     </div>
   </div>
@@ -35,8 +62,8 @@
 <script>
 import LeftSidebar from '@/components/Custom Layout/LeftSidebar.vue'
 import ListView from '@/components/ListView/ListView.vue'
-import { ref, onMounted } from 'vue'
-import { createResource } from 'frappe-ui'
+import { ref, onMounted, computed } from 'vue'
+import { createResource,TextInput,FormControl,Badge,DatePicker } from 'frappe-ui'
 import { useRouter } from 'vue-router';
 import Pagination from '@/components/Pagination.vue'
 
@@ -44,14 +71,17 @@ export default {
   components: {
     LeftSidebar,
     ListView,
-    Pagination
+    Pagination,
+    TextInput,
+    FormControl,
+    Badge,DatePicker
   },
   setup() {
     const isSidebarCollapsed = ref(false)
     const rows = ref([])
     const paginatedRows = ref([]) 
     const columns = ref([
-      { label: 'Name', key: 'name', width: '200px' },
+      { label: 'Name', key: 'name', width: '250px' },
       { label: 'Status', key: 'status', width: '200px' },
       { label: 'Date', key: 'transaction_date', width: '200px' },
       { label:'Item', key:'item_name', width:'200px' }
@@ -68,7 +98,7 @@ export default {
     rows.value = data.map(row => ({
       ...row,
       total: String(row.total),
-      item_name: row.items.length > 0 ? row.items[0].item_name : 'No items'
+      item_name: row.items.map(item => item.item_name).join(', ') || 'No items',
     }))
     console.log('Fetched data:', rows.value)
   } catch (error) {
@@ -94,6 +124,39 @@ export default {
     const updatePaginatedRows = (newPaginatedRows) => {
       paginatedRows.value = newPaginatedRows
     }
+
+    const filterName = ref('')
+    const filterStatus = ref('')    
+    const filterDate = ref('')
+
+    const filteredRows = computed(() => {
+      return rows.value.filter(row => {
+        const nameMatch = row.name.toLowerCase().includes(filterName.value.toLowerCase())
+        const statusMatch = row.status.toLowerCase().includes(filterStatus.value.toLowerCase()) || !filterStatus.value;        
+        const reversedDate = filterDate.value.split('-').reverse().join('-'); 
+        const dateMatch = row.transaction_date && row.transaction_date.includes(reversedDate); 
+
+        return nameMatch && statusMatch && dateMatch;
+      });
+    });
+
+    const getStatusTheme = (status) => {     
+      switch (status) {
+        case 'Draft':
+          return { theme: "red" };  
+        case 'Submitted':
+          return { theme: "blue" };
+        case 'Cancelled':
+          return { theme: "green" };  
+        case 'Pending':
+          return { theme: "orange" };             
+        default:
+          return { theme: "gray" };
+      }
+    }
+
+
+
     onMounted(() => {
       fetchmaterialreq()
     })
@@ -105,7 +168,12 @@ export default {
       toggleSidebar,
       OpenClick,
       updatePaginatedRows,
-      paginatedRows
+      paginatedRows,
+      filterName,
+      filterStatus,      
+      filteredRows,
+      filterDate,
+      getStatusTheme,
 
     }
   },

@@ -7,9 +7,27 @@
           </header>
         </div>
       </div>
-      <div :class="['layout', { collapsed: isSidebarCollapsed }]">
-        <LeftSidebar :isCollapsed="isSidebarCollapsed" @toggle="toggleSidebar" />
+      <div :class="['layout', { collapsed: isSidebarCollapsed }]">        
+        <LeftSidebar class="z-[8]" :isCollapsed="isSidebarCollapsed" @toggle="toggleSidebar" @true="sidebarcol" />
         <div class="main-content">
+
+          <div class="fiter mb-2 flex gap-3">
+            <TextInput type="search" size="sm" variant="subtle" placeholder="Name" v-model="filterName" />         
+            <FormControl type="select"
+              :options="[
+                {},
+                { label: 'Draft',value: 'Draft',}, { label: 'To Bill',value: 'To Bill',}, { label: 'Return Issued',value: 'Return Issued',},
+                { label: 'Completed',value: 'Completed',},{ label: 'Cancelled',value: 'Cancelled',}, { label: 'Closed',value: 'Closed',},                              
+              ]"
+              size="sm" variant="subtle" placeholder="Status" v-model="filterStatus" class="w-52" />
+            <TextInput type="search" size="sm" variant="subtle" placeholder="Total" v-model="filterTotal" />
+            <DatePicker class="border-none" size="md" variant="subtle" placeholder="Date" v-model="filterDate"/>
+            <Button :variant="'subtle'" theme="gray" size="sm" @click="resetFilters"> Reset</Button>
+            <div class="flex gap-2">
+            <RefreshButton @refresh="reload" :isLoading="isLoading" />
+          </div>
+          </div>
+
           <ListView
           class="h-[500px]"
           :columns="columns"
@@ -25,8 +43,21 @@
             }"
             row-key="name"
             @row-click="OpenClick"
-          />
-          <pagination :rows="rows" @update:paginatedRows="updatePaginatedRows" /> 
+          >
+          <template #cell="{ item, column }">
+            <div v-if="column.key === 'status'">
+              <Badge
+                v-bind="getStatusTheme(item)"
+                size="sm"
+                :label="item"
+              />
+            </div>
+            <div v-else>
+              <span class="font-medium text-gray-700 text-base" style="max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block;">{{ item }}</span>
+            </div>
+          </template>
+          </ListView>
+          <pagination :rows="filteredRows" @update:paginatedRows="updatePaginatedRows" /> 
         </div>
       </div>
     </div>
@@ -34,28 +65,34 @@
   
   <script>
   import LeftSidebar from '@/components/Custom Layout/LeftSidebar.vue'
+  import RefreshButton from '@/components/RefreshButton.vue'
   import ListView from '@/components/ListView/ListView.vue'
   import Pagination from '@/components/Pagination.vue'
-  import { ref, onMounted } from 'vue'
-  import { createResource } from 'frappe-ui'
+  import { ref, onMounted, computed } from 'vue'
+  import { createResource,TextInput,FormControl,Badge,DatePicker,Button } from 'frappe-ui'
   import { useRouter } from 'vue-router';
   
   export default {
     components: {
       LeftSidebar,
       ListView,
-      Pagination
+      Pagination,
+      TextInput,
+      FormControl,
+      Badge,DatePicker,
+      RefreshButton,Button
     },
     setup() {
       const isSidebarCollapsed = ref(false)
       const paginatedRows = ref([]) 
       const rows = ref([])
+      const isLoading = ref(false)
       const columns = ref([
-        { label: 'Name', key: 'name', width: '200px' },
+        { label: 'Name', key: 'name', width: '250px' },
         { label: 'Status', key: 'status', width: '200px' },
         { label:'Item', key:'item_name', width:'200px'},
         { label: 'Date', key: 'posting_date', width: '200px' },
-        { label: 'Total', key: 'total', width: '200px' },
+        { label: 'Total', key: 'grand_total', width: '200px' },
       ])
   
       const todos = createResource({
@@ -63,23 +100,31 @@
        method:'get',
       })
   
-      const fetchquote = async () => {
+      const shipment = async () => {
     try {
+      isLoading.value = true
       const data = await todos.fetch()
       rows.value = data.map(row => ({
         ...row,
         total: String(row.total),
-        item_name: row.items.length > 0 ? row.items[0].item_name : 'No items'
+        item_name: row.items.map(item => item.item_name).join(', ') || 'No items',
       }))
       console.log('Fetched data:', rows.value)
     } catch (error) {
       console.error('Error fetching data:', error)
-    }
+    }finally {
+        isLoading.value = false
+      }
   }
   
-  
+      const reload = () => {
+          shipment() 
+        }
       const toggleSidebar = () => {
         isSidebarCollapsed.value = !isSidebarCollapsed.value
+      }
+      const sidebarcol = () => {
+        console.log("vlaueqwqwqq",)
       }
   
       const router = useRouter()
@@ -95,19 +140,72 @@
       const updatePaginatedRows = (newPaginatedRows) => {
       paginatedRows.value = newPaginatedRows
     }
+
+    const resetFilters = () => {
+      filterName.value = ''
+      filterStatus.value = ''
+      filterTotal.value = ''
+      filterDate.value = ''
+    }
+
+      const filterName = ref('')
+      const filterStatus = ref('')
+      const filterTotal = ref('')
+      const filterDate = ref('')
+
+      const filteredRows = computed(() => {
+        return rows.value.filter(row => {
+          const nameMatch = row.name.toLowerCase().includes(filterName.value.toLowerCase())
+          const statusMatch = row.status.toLowerCase().includes(filterStatus.value.toLowerCase()) || !filterStatus.value; 
+          const grand_totalMatch = row.grand_total.toString().includes(filterTotal.value.toString()) || !filterTotal.value;
+          const reversedDate = filterDate.value.split('-').reverse().join('-'); 
+          const dateMatch = row.posting_date && row.posting_date.includes(reversedDate); 
+
+          return nameMatch && statusMatch && grand_totalMatch && dateMatch;
+        });
+      });
+
+      const getStatusTheme = (status) => {     
+      switch (status) {
+        case 'Draft':
+          return { theme: "red" };  
+        case 'Completed':
+          return { theme: "blue" };
+        case 'Cancelled':
+          return { theme: "Green" };  
+        case 'Closed':
+          return { theme: "orange" };        
+        default:
+          return { theme: "gray" };
+      }
+    }
+    
+
+
+
+
       onMounted(() => {
-        fetchquote()
+        shipment()
       })
   
       return {
         isSidebarCollapsed,
+        sidebarcol,
         rows,
         columns,
         toggleSidebar,
         OpenClick,
         updatePaginatedRows,
-        paginatedRows
-
+        paginatedRows,
+        filterName,
+        filterStatus,
+        filterTotal,
+        filteredRows,
+        filterDate,
+        resetFilters,
+        getStatusTheme,
+        isLoading,
+        reload
       }
     },
   }

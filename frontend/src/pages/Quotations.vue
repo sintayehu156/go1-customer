@@ -5,7 +5,7 @@
         <header class="border-b bg-white px-5 py-2.5 sm:px-5 pb-[2.605rem]">
           <div class="float-left">Quotations</div>
           <div class="float-right">
-            <Button
+            <!-- <Button
               :variant="'solid'"
               theme="gray"
               size="sm"
@@ -14,16 +14,35 @@
               :loadingText="null"
               :disabled="false"
               :link="null"
-              >+ New Quotation</Button
             >
+              + New Quotation
+            </Button> -->
+            
           </div>
+          
         </header>
       </div>
     </div>
     <div :class="['layout', { collapsed: isSidebarCollapsed }]">
-      <LeftSidebar :isCollapsed="isSidebarCollapsed" @toggle="toggleSidebar" />
+      <LeftSidebar class="z-[8]" :isCollapsed="isSidebarCollapsed" @toggle="toggleSidebar" />
       <div class="main-content">
-        <!-- class="max-h-[calc(100vh-10rem)]" -->
+        <div class="fiter mb-2 flex gap-3">
+          <TextInput type="search" size="sm" variant="subtle" placeholder="Name" v-model="filterName" />         
+          <FormControl type="select"
+            :options="[
+              {},
+              { label: 'Draft',value: 'Draft',}, { label: 'Open',value: 'Open',}, { label: 'Replied',value: 'Replied',},
+              { label: 'Partially Ordered',value: 'Partially Ordered',},   { label: 'Ordered',value: 'Ordered',},   { label: 'Lost',value: 'Lost',},             
+              { label: 'Cancelled',value: 'Cancelled',}, { label: 'Expired',value: 'Expired',},                 
+            ]"
+            size="sm" variant="subtle" placeholder="Status" v-model="filterStatus" class="w-52" />
+          <TextInput type="search" size="sm" variant="subtle" placeholder="Total" v-model="filterTotal" />        
+          <DatePicker class="border-none" size="md" variant="subtle" placeholder="Date" v-model="filterDate"/>
+          <Button :variant="'subtle'" theme="gray" size="sm" @click="resetFilters"> Reset</Button>
+          <div class="flex gap-2">
+            <RefreshButton @refresh="reload" :isLoading="isLoading" />
+          </div>
+        </div>
         <ListView
           class="h-[500px]"
           :columns="columns"
@@ -43,8 +62,20 @@
           row-key="name"
           @row-click="OpenClick"
         >
+        <template #cell="{ item, column }">
+            <div v-if="column.key === 'status'">
+              <Badge
+                v-bind="getStatusTheme(item)"
+                size="sm"
+                :label="item"
+              />
+            </div>
+            <div v-else>
+              <span class="font-medium text-gray-700 text-base" style="max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block;">{{ item }}</span>
+            </div>
+          </template>
         </ListView>
-        <pagination :rows="rows" @update:paginatedRows="updatePaginatedRows" /> 
+        <Pagination :rows="filteredRows" @update:paginatedRows="updatePaginatedRows" /> 
       </div>
     </div>
   </div>
@@ -54,8 +85,9 @@
 import LeftSidebar from '@/components/Custom Layout/LeftSidebar.vue'
 import Pagination from '@/components/Pagination.vue'
 import ListView from '@/components/ListView/ListView.vue'
-import { ref, onMounted } from 'vue'
-import { createResource } from 'frappe-ui'
+import RefreshButton from '@/components/RefreshButton.vue'
+import { ref, onMounted, computed } from 'vue'
+import { createResource, FeatherIcon,TextInput,FormControl,DatePicker, Badge,Button} from 'frappe-ui'
 import { useRouter } from 'vue-router'
 
 export default {
@@ -63,11 +95,19 @@ export default {
     LeftSidebar,
     ListView,
     Pagination,
+    RefreshButton,
+    FeatherIcon,
+    TextInput,
+    FormControl,
+    DatePicker,
+    Badge,Button
   },
   setup() {
     const isSidebarCollapsed = ref(false)
     const rows = ref([]) 
     const paginatedRows = ref([]) 
+    const isLoading = ref(false)
+
     const columns = ref([
       { label: 'Name', key: 'name', width: '200px' },
       { label: 'Status', key: 'status', width: '200px' },
@@ -76,7 +116,7 @@ export default {
       { label: 'Total', key: 'total', width: '200px' },
     ])
 
-    // Fetching quotations from API
+   
     const quote = createResource({
       url: 'go1_customer.go1_customer.api.api.get_quotation',
       method: 'get',
@@ -84,16 +124,27 @@ export default {
 
     const fetchquote = async () => {
       try {
+        isLoading.value = true
         const data = await quote.fetch()
-        rows.value = data.map((row) => ({
-          ...row,
-          total: String(row.total),
-          item_name: row.items.length > 0 ? row.items[0].item_name : 'No items',
-        }))
+        rows.value = data.map((row) => {
+          const item_names = row.items.map(item => item.item_name).join(', ')
+          return {
+            ...row,
+            total: String(row.grand_total),
+            item_name: item_names || 'No items', 
+            transaction_date: row.transaction_date
+          }
+        })
         console.log('Fetched data:', rows.value)
       } catch (error) {
         console.error('Error fetching data:', error)
+      } finally {
+        isLoading.value = false
       }
+    }
+
+    const reload = () => {
+      fetchquote() 
     }
 
     const toggleSidebar = () => {
@@ -111,28 +162,45 @@ export default {
       }
     }
 
-
-    const getStatusRowClass = (row) => {
-      switch (row.status) {
-        case 'Ordered':
-          return 'bg-green-100'
-        case 'Lost':
-          return 'bg-gray-100'
-        case 'Open':
-          return 'bg-red-100'
-        case 'Draft':
-          return 'bg-orange-100'
-        case 'Cancelled':
-          return 'bg-yellow-100'
-        case 'Expired':
-          return 'bg-gray-200'
-        default:
-          return ''
-      }
-    }
-
     const updatePaginatedRows = (newPaginatedRows) => {
       paginatedRows.value = newPaginatedRows
+    }
+    const resetFilters = () => {
+      filterName.value = ''
+      filterStatus.value = ''
+      filterTotal.value = ''
+      filterDate.value = ''
+    }
+    const filterName = ref('')
+    const filterStatus = ref('')
+    const filterTotal = ref('')
+    const filterDate = ref('')
+
+    const filteredRows = computed(() => {
+      return rows.value.filter(row => {
+        const nameMatch = row.name.toLowerCase().includes(filterName.value.toLowerCase())
+        const statusMatch = row.status.toLowerCase().includes(filterStatus.value.toLowerCase()) || !filterStatus.value; 
+        const grand_totalMatch = row.grand_total.toString().includes(filterTotal.value.toString()) || !filterTotal.value;
+        const reversedDate = filterDate.value.split('-').reverse().join('-'); 
+        const dateMatch = row.transaction_date && row.transaction_date.includes(reversedDate);         
+
+        return nameMatch && statusMatch && grand_totalMatch && dateMatch;
+      });
+    });
+
+    const getStatusTheme = (status) => {     
+      switch (status) {
+        case 'Draft':
+          return { theme: "red" };  
+        case 'Open':
+          return { theme: "blue" };
+        case 'Cancelled':
+          return { theme: "Green" };  
+        case 'Ordered':
+          return { theme: "orange" };             
+        default:
+          return { theme: "gray" };
+      }
     }
 
     onMounted(() => {
@@ -146,14 +214,27 @@ export default {
       columns,
       toggleSidebar,
       OpenClick,
-      getStatusRowClass,
-      updatePaginatedRows
+      updatePaginatedRows,
+      reload,
+      isLoading,
+      filterName,
+      filterStatus,
+      filterTotal,
+      filteredRows,
+      filterDate,
+      resetFilters,
+      getStatusTheme,
     }
   },
 }
 </script>
 
 <style scoped>
+html, body, #app {
+  height: 100%;
+  margin: 0;
+}
+
 .head-layout {
   display: flex;
   width: 100%;
@@ -163,7 +244,7 @@ export default {
 .layout {
   display: flex;
   width: 100%;
-  height: 91vh;
+  height: 100%; /* Full height */
   transition: margin-left 0.3s ease;
 }
 
@@ -172,6 +253,7 @@ export default {
   padding: 1.25rem;
   transition: margin-left 0.3s ease;
   margin-left: 220px; /* Default width of sidebar */
+  height: 100%; /* Full height */
 }
 
 .head-content {
