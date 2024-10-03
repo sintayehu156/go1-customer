@@ -1,12 +1,27 @@
 import frappe
 from frappe import _
 
+# @frappe.whitelist()
+# def get_application_logo():
+#     try:
+#         doc = frappe.get_doc('Go1 Navbar Settings')
+#         return {
+#             'application_logo': doc.application_logo
+#         }
+#     except frappe.DoesNotExistError:
+#         frappe.throw(_("Go1 Navbar Settings document does not exist"))
+#     except Exception as e:
+#         frappe.throw(str(e))
+
 @frappe.whitelist()
 def get_quotation():
     users_data = getcustomer()
-
+    user_name = getcustomer()
+    filters= {}
+    if users_data:
+        filters={'party_name': ['in', users_data]}
    
-    quotations = frappe.db.get_all("Quotation", fields=['*'], filters={'party_name': ['in', users_data]})
+    quotations = frappe.db.get_all("Quotation", fields=['*'], filters=filters)
     
     quotation_docs = []
 
@@ -17,6 +32,7 @@ def get_quotation():
        
         quotation["items"] = items
         quotation["taxes"] = taxes
+    
 
         
         quotation['grand_total'] = frappe.utils.fmt_money(quotation.get('grand_total'), currency=quotation.get('currency'))
@@ -48,6 +64,18 @@ def get_quotation():
             quotation['state'] = address.state
             quotation['phone'] = address.phone
             quotation['pincode'] = address.pincode
+            quotation['user_name'] = user_name
+
+        if quotation.get('shipping_address_name'):
+            address = frappe.get_doc('Address', quotation['shipping_address_name'])
+            quotation['ship_address_line1'] = address.address_line1
+            quotation['ship_address_line2'] = address.address_line2
+            quotation['ship_city'] = address.city
+            quotation['ship_country'] = address.country
+            quotation['ship_state'] = address.state
+            quotation['ship_phone'] = address.phone
+            quotation['ship_pincode'] = address.pincode
+            quotation['ship_user_name'] = user_name
        
         quotation_docs.append(quotation)
 
@@ -58,7 +86,11 @@ def get_quotation():
 @frappe.whitelist()
 def get_salesorder():
     users_data = getcustomer()
-    salesorders = frappe.db.get_all("Sales Order", fields=['*'], filters={'customer': ['in', users_data]})
+    filters= {}
+    if users_data:
+        filters={'customer': ['in', users_data]}
+   
+    salesorders = frappe.db.get_all("Sales Order", fields=['*'], filters= filters)
     salesorder_items = frappe.db.get_all("Sales Order Item", fields=["*"])
     salesorder_taxes = frappe.db.get_all("Sales Taxes and Charges", fields=["*"])
     salesorder_docs = []
@@ -113,7 +145,10 @@ def get_salesorder():
 @frappe.whitelist()
 def get_salesinvoice():
     user_data = getcustomer()
-    salesinvoices = frappe.db.get_all("Sales Invoice", fields=['*'], filters={'customer': ['in', user_data]})
+    filters= {}
+    if user_data:
+        filters={'customer': ['in', user_data]}
+    salesinvoices = frappe.db.get_all("Sales Invoice", fields=['*'], filters=filters)
     salesinvoice_items = frappe.db.get_all("Sales Invoice Item", fields=["*"])
     salesinvoice_taxes = frappe.db.get_all("Sales Taxes and Charges", fields=["*"])
     salesinvoices_docs = []
@@ -163,14 +198,22 @@ def get_salesinvoice():
 
 
 @frappe.whitelist()
+
 def get_issues():
-    issue = frappe.db.get_all("Issue", fields=['*'])
+    user_data = getcustomer()
+    filters= {}
+    if user_data:
+        filters={'customer': ['in', user_data]}
+    issue = frappe.db.get_all("Issue", fields=['*'], filters=filters)
     return issue
 
 @frappe.whitelist()
 def get_shipments():
    users_data = getcustomer()
-   deliverynote = frappe.db.get_all("Delivery Note", fields=['*'], filters={'customer': ['in', users_data]})
+   filters= {}
+   if users_data:
+      filters={'customer': ['in', users_data]}
+   deliverynote = frappe.db.get_all("Delivery Note", fields=['*'], filters=filters)
    deliverynote_items = frappe.db.get_all("Delivery Note Item", fields=["*"])
    deliverynote_taxes = frappe.db.get_all("Sales Taxes and Charges", fields=["*"]) 
    deliverynote_docs = []
@@ -263,6 +306,11 @@ def get_navbar_routes():
     return user_details
 
 @frappe.whitelist()
+def get_navbar_routes_logo():
+    check=frappe.get_single('Go1 Navbar Settings')
+    return check
+
+@frappe.whitelist()
 def get_userid():
     return frappe.session.user
 
@@ -277,7 +325,7 @@ def getcustomer():
     for customer in customers:
         portal_users = frappe.db.get_all("Portal User", filters={'parent': customer['name']}, fields=['user'])
         for portal_user in portal_users:
-            if portal_user['user'] == user_check:
+            if portal_user['user'] == user_check :
                 customer_portal_details.append({
                     'customer': customer,
                     'portal_users': portal_users
@@ -289,14 +337,14 @@ def getcustomer():
     return customers_details
 
 
-@frappe.whitelist()
-def gettest():
-    quotations = frappe.db.get_all("Quotation", fields=['*'])
-    for row in quotations:
-        row['items'] = frappe.get_all("Quotation Item",
-                        fields=['*'],
-                        filters={'parent':row.name},order_by='creation desc')
-    return quotations
+# @frappe.whitelist()
+# def gettest():
+#     quotations = frappe.db.get_all("Quotation", fields=['*'])
+#     for row in quotations:
+#         row['items'] = frappe.get_all("Quotation Item",
+#                         fields=['*'],
+#                         filters={'parent':row.name},order_by='creation desc')
+#     return quotations
 
 
 @frappe.whitelist()
@@ -314,6 +362,8 @@ def get_address():
     for address in address_list:
         for link in address['links']:
             if link['link_name'] in users_data:
+                address_data.append(address)
+            else:
                 address_data.append(address)
 
     return address_data

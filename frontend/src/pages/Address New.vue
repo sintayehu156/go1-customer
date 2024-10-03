@@ -10,7 +10,7 @@
     <div :class="['layout', { collapsed: isSidebarCollapsed }]">
       <LeftSidebar :isCollapsed="isSidebarCollapsed" @toggle="toggleSidebar" />
       <div class="main-content">
-        <div class="bg-white shadow-md rounded-lg p-6 space-y-6 pb-[2.625rem]">
+        <div class="bg-white shadow-md rounded-lg p-6 space-y-6 pb-[2.625rem]  ml-[126px] mr-[120px]">
           <div class="flex justify-between">
             <div>
               <p class="text-2xl font-bold text-gray-800">Address</p>
@@ -122,9 +122,10 @@
               <FormControl
                 :type="'text'"
                 size="md"
+                :disabled="true"
                 variant="subtle"
                 label="Link Doctype"
-                v-model="links_doctype"
+                v-model="text"
                 class="mb-5"
               />
             </div>
@@ -133,9 +134,10 @@
               <FormControl
                 :type="'text'"
                 size="md"
+                :disabled="true"
                 variant="subtle"
                 label="Link Name"
-                v-model="link_name"
+                v-model="rows"
                 class="mb-5"
               />
             </div>
@@ -164,8 +166,8 @@
 
 <script>
 import LeftSidebar from '@/components/Custom Layout/LeftSidebar.vue';
-import { ref, watch } from 'vue';
-import { Autocomplete, Breadcrumbs, Button, FormControl } from 'frappe-ui';
+import { ref, watch,onMounted } from 'vue';
+import {  Breadcrumbs, Button, FormControl,createResource } from 'frappe-ui';
 import { useRouter } from 'vue-router';
 
 export default {
@@ -181,6 +183,7 @@ export default {
     const isSidebarCollapsed = ref(false);
     const address_title = ref('');
     const address_type = ref('');
+    const isLoading = ref(false);
     const address_line1 = ref('');
     const address_line2 = ref('');
     const city = ref('');
@@ -188,10 +191,12 @@ export default {
     const pincode = ref('');
     const country = ref('');
     const email_id = ref('');
+    const rows = ref('');
     const customOption = ref([]);
     const docOption = ref()
     const phone = ref('');
     const gstin = ref('');
+    const customer_name=ref('');
     const links_doctype = ref('');
     const link_name = ref('');
 
@@ -274,21 +279,49 @@ export default {
       isSidebarCollapsed.value = !isSidebarCollapsed.value;
     };
 
+    
+    const customerData = ref([]);
+
+const address_list = createResource({
+  url: 'go1_customer.go1_customer.api.api.getcustomer',
+  cache: ['data'],
+  auto: true,
+});
+const fetchorder = async () => {
+      try {
+        isLoading.value = true
+        const data = await address_list.fetch()
+        rows.value = data
+        console.log('Fetched data:', rows.value)
+      } catch (error) {
+        console.error('Error fetching data:', error)
+      }finally {
+        isLoading.value = false
+      }
+    }
+
     watch(address_title, (newTitle) => {
       breadcrumbsList.value[1].label = newTitle;
     });
+    onMounted(() => {
+      fetchorder()
+    })
 
    
     return {
       isSidebarCollapsed,
       country,
+      address_list,
       state,
+      customerData,
+      text:'Customer',
       pincode,
       address_title,
       address_type,
       address_line1,
       customOption,
       city,
+      rows,
       gstin,
       address_line2,
       toggleSidebar,
@@ -298,6 +331,7 @@ export default {
       createIssue,
       links_doctype,
       link_name,
+      customer_name,
     };
   },
 };
@@ -328,4 +362,10 @@ export default {
   transition: margin-left 0.3s ease;
   margin-left: 220px; /* Default width of sidebar */
 }
+.collapsed .main-content {
+    margin-left: 60px; /* Adjust when sidebar is collapsed */
+  }
+  .collapsed .head-content {
+    margin-left: 60px; /* Adjust when sidebar is collapsed */
+  }
 </style>

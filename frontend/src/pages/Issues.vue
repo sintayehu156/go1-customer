@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="h-[calc(100vh)] overflow-hidden flex flex-col">
     <div :class="['head-layout', { collapsed: isSidebarCollapsed }]">
       <div class="head-content">
         <header class="border-b bg-white px-5 py-6.5 sm:px-5">
@@ -27,7 +27,7 @@
       <div class="main-content">
 
         <div class="fiter mb-2 flex gap-3">
-          <TextInput type="search" size="sm" variant="subtle" placeholder="Name" v-model="filterName" />         
+          <TextInput type="search" size="sm" variant="subtle" placeholder="Name" v-model="filterName" class="w-48" />         
           <FormControl type="select"
             :options="[
               {},
@@ -35,14 +35,16 @@
               { label: 'Resolved',value: 'Resolved',},   { label: 'Closed',value: 'Closed',},             
                              
             ]"
-            size="sm" variant="subtle" placeholder="Status" v-model="filterStatus" class="w-52" /> 
+            size="sm" variant="subtle" placeholder="Status" v-model="filterStatus" class="w-48" /> 
+            <div class="flex ml-auto">
             <Button :variant="'subtle'" theme="gray" size="sm" @click="resetFilters"> Reset</Button>  
-            <div class="flex gap-2">
+            <div class="flex gap-2 ml-2">
             <RefreshButton @refresh="reload" :isLoading="isLoading" />
-          </div>      
+          </div> 
+        </div>     
         </div>
         <ListView
-          class="h-[500px]"
+        class="h-full"
           :columns="columns"
           :rows="paginatedRows"
           :options="{
@@ -68,8 +70,13 @@
                 :label="item"
               />
             </div>
+            <div v-else-if="column.key === 'name'">
+              <span class="text-black text-base" style="max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block;">
+                {{ item }}
+              </span>
+            </div>
             <div v-else>
-              <span class="font-medium text-gray-700 text-base" style="max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block;">{{ item }}</span>
+              <span class="font-small text-gray-700 text-base" style="max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block;">{{ item }}</span>
             </div>
           </template>
         </ListView>
@@ -104,11 +111,11 @@ export default {
     const isLoading = ref(false)
     const paginatedRows = ref([])
     const columns = ref([
-      { label: 'Name', key: 'name', width: '250px' },
-      { label: 'Status', key: 'status', width: '200px' },
-      { label: 'Subject', key: 'subject', width: '200px' },      
-      { label: 'Raised By(email)', key: 'owner', width: '200px' },
-      { label: 'Priority', key: 'priority', width: '200px' },
+      { label: 'Name', key: 'name',  },
+      { label: 'Status', key: 'status',  },
+      { label: 'Subject', key: 'subject',  },      
+      { label: 'Raised By(email)', key: 'owner',  },
+      { label: 'Priority', key: 'priority',  },
     ])
 
     const issues = createResource({
@@ -172,8 +179,7 @@ export default {
     });
 
     
-    const getStatusTheme = (status) => {  
-      console.log('Status:',status)   
+    const getStatusTheme = (status) => {         
       switch (status) {
         case 'Open':
           return { theme: "red" };  
@@ -223,7 +229,7 @@ export default {
 .layout {
   display: flex;
   width: 100%;
-  height: 91vh;
+  height: calc(100vh - 50px); 
   transition: margin-left 0.3s ease;
 }
 
@@ -231,8 +237,11 @@ export default {
   flex-grow: 1;
   padding: 1.25rem;
   transition: margin-left 0.3s ease;
-  margin-left: 220px; /* Default width of sidebar */
+  margin-left: 220px;
+  display: flex;
+  flex-direction: column; 
 }
+
 .head-content {
   flex-grow: 1;
   padding: 0px;
@@ -254,6 +263,10 @@ export default {
 
 .row:hover {
   background-color: #f9fafb; /* Light gray background on hover */
+}
+
+.pagination {
+  margin-top: auto; 
 }
 </style>
   

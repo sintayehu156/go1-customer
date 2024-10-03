@@ -8,18 +8,36 @@
     </div>
     <div :class="['layout', { collapsed: isSidebarCollapsed }]">
       <LeftSidebar :isCollapsed="isSidebarCollapsed" @toggle="toggleSidebar" />
+      
+      <div class="main-content">
+        <Dashboard/>
+      </div>
+
    </div>
 </template>
+
 <script>
 import LeftSidebar from '@/components/Custom Layout/LeftSidebar.vue'
-import { useRouter } from 'vue-router';
+import Dashboard from '@/dashboard/dashboard.vue'
+import { ref } from 'vue'
+
 export default {
   components: {
-    LeftSidebar
+    LeftSidebar,
+    Dashboard,
   },
   setup() {
-    const router = useRouter()
-  }
+    const isSidebarCollapsed = ref(false)
+
+    const toggleSidebar = () => {
+      isSidebarCollapsed.value = !isSidebarCollapsed.value
+    }
+
+    return {
+      isSidebarCollapsed,
+      toggleSidebar,
+    }
+  },
 }
 </script>
 
@@ -29,18 +47,18 @@ export default {
   width: 100%;
   transition: margin-left 0.3s ease;
 }
-.layout {
+/* .layout {
   display: flex;
   width: 100%;
-  height: 91vh;
+  height: 100vh;
   transition: margin-left 0.3s ease;
-}
+} */
 
 .main-content {
   flex-grow: 1;
   padding: 1.25rem;
   transition: margin-left 0.3s ease;
-  margin-left: 220px; 
+  margin-left: 200px; 
 }
 .head-content {
   flex-grow: 1;

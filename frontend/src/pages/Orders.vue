@@ -1,5 +1,5 @@
 <template>
-  <div>
+   <div class="h-[calc(100vh)] overflow-hidden flex flex-col">
     <div :class="['head-layout', { collapsed: isSidebarCollapsed }]">
       <div class="head-content">
         <header class="border-b bg-white px-5 py-2.5 sm:px-5">
@@ -11,7 +11,7 @@
       <LeftSidebar class="z-[8]" :isCollapsed="isSidebarCollapsed" @toggle="toggleSidebar" />
       <div class="main-content">
         <div class="fiter mb-2 flex gap-3">
-          <TextInput type="search" size="sm" variant="subtle" placeholder="Name" v-model="filterName" />         
+          <TextInput type="search" size="sm" variant="subtle" placeholder="Name" v-model="filterName" class="w-48" />         
           <FormControl type="select"
             :options="[
               {},
@@ -19,16 +19,18 @@
               { label: 'Completed',value: 'Completed',},   { label: 'To Deliver',value: 'To Deliver',},   { label: 'To Bill',value: 'To Bill',},             
               { label: 'Cancelled',value: 'Cancelled',}, { label: 'Closed',value: 'Closed',},                 
             ]"
-            size="sm" variant="subtle" placeholder="Status" v-model="filterStatus" class="w-52" />
-          <TextInput type="search" size="sm" variant="subtle" placeholder="Total" v-model="filterTotal" />
-          <DatePicker class="border-none" size="md" variant="subtle" placeholder="Date" v-model="filterDate"/>
+            size="sm" variant="subtle" placeholder="Status" v-model="filterStatus" class="w-48" />
+          <TextInput type="search" size="sm" variant="subtle" placeholder="Total" v-model="filterTotal" class="w-48" />
+          <DatePicker class="border-none w-48" size="md" variant="subtle" placeholder="Date" v-model="filterDate"/>
+          <div class="flex ml-auto">
           <Button :variant="'subtle'" theme="gray" size="sm" @click="resetFilters"> Reset</Button>
-          <div class="flex gap-2">
+          <div class="flex gap-2 ml-2">
             <RefreshButton @refresh="reload" :isLoading="isLoading" />
           </div>
         </div>
+        </div>
         <ListView
-          class="h-[500px]"
+        class="h-full" 
           :columns="columns"
           :rows="paginatedRows"
           :options="{
@@ -51,8 +53,13 @@
                 :label="item"
               />
             </div>
+            <div v-else-if="column.key === 'name'">
+              <span class="text-black text-base" style="max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block;">
+                {{ item }}
+              </span>
+            </div>
             <div v-else>
-              <span class="font-medium text-gray-700 text-base" style="max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block;">{{ item }}</span>
+              <span class="font-small text-gray-700 text-base" style="max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block;">{{ item }}</span>
             </div>
           </template>
         </ListView>
@@ -88,11 +95,11 @@ export default {
     const paginatedRows = ref([]) 
     const isLoading = ref(false)
     const columns = ref([
-      { label: 'Name', key: 'name', width: '250px' },
-      { label: 'Status', key: 'status', width: '200px' },
-      { label: 'Date', key: 'transaction_date', width: '200px' },
-      {label:'Item', key:'item_name', width:'200px'},
-      { label: 'Total', key: 'grand_total', width: '200px' },
+      { label: 'Name', key: 'name', },
+      { label: 'Status', key: 'status',  },
+      { label: 'Date', key: 'transaction_date',  },
+      { label:'Item', key:'item_name', },
+      { label: 'Total', key: 'grand_total',  },
     ])
 
     const order = createResource({
@@ -150,12 +157,15 @@ export default {
     const filterTotal = ref('')
     const filterDate = ref('')
     
+    const toggleItemBox = () => {
+      isItemBoxVisible.value = !isItemBoxVisible.value;
+    };
 
     const filteredRows = computed(() => {
       return rows.value.filter(row => {
         const nameMatch = row.name.toLowerCase().includes(filterName.value.toLowerCase())
-        const statusMatch = row.status.toLowerCase().includes(filterStatus.value.toLowerCase()) || !filterStatus.value; 
-        const totalMatch = row.total.toString().includes(filterTotal.value.toString()) || !filterTotal.value; 
+        const statusMatch = row.status.toLowerCase().includes(filterStatus.value.toLowerCase()) || !filterStatus.value;        
+        const totalMatch = row.total.toString().replace(/[.,]/g, '').includes(filterTotal.value.toString().replace(/[.,]/g, '')) || !filterTotal.value; 
         const reversedDate = filterDate.value.split('-').reverse().join('-');
         const dateMatch = row.transaction_date && row.transaction_date.includes(reversedDate); 
         return nameMatch && statusMatch && totalMatch && dateMatch;
@@ -186,6 +196,7 @@ export default {
       rows,
       paginatedRows, 
       columns,
+      toggleItemBox,
       toggleSidebar,
       OpenClick,
       updatePaginatedRows,
@@ -212,7 +223,7 @@ export default {
 .layout {
   display: flex;
   width: 100%;
-  height: 80vh;
+  height: calc(100vh - 50px); 
   transition: margin-left 0.3s ease;
 }
 
@@ -220,7 +231,9 @@ export default {
   flex-grow: 1;
   padding: 1.25rem;
   transition: margin-left 0.3s ease;
-  margin-left: 220px; /* Default width of sidebar */
+  margin-left: 220px;
+  display: flex;
+  flex-direction: column; 
 }
 .head-content {
   flex-grow: 1;
@@ -243,5 +256,8 @@ export default {
 
 .row:hover {
   background-color: #f9fafb; /* Light gray background on hover */
+}
+.pagination {
+  margin-top: auto; 
 }
 </style>

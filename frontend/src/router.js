@@ -74,12 +74,7 @@ const routes = [
       path: '/Shipments',
       name: 'shipments', 
       component: () => import ('@/pages/shipments.vue')
-    },
-    // {
-    //   path:'/Invoices/:id',
-    //   name:'InvoiceDetails',
-    //   component:() => import ('@/pages/Invoice Details.vue')
-    // },
+    },    
     {
       path: '/Invoices/:id',
       name: 'InvoiceDetail', 
@@ -100,6 +95,7 @@ const routes = [
       name:'dashboard',
       component:() => import ('@/pages/Dashboards.vue')
     }
+    
 
 ]
 

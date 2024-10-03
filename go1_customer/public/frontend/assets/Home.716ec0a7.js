@@ -1,1 +1,0 @@
-import{c as e,l as a,o as r,f as t,g as o}from"./vendor.72004f8a.js";import"./index.feff435d.js";import{L as s}from"./LeftSidebar.894a8783.js";const c={class:"max-w-3xl py-12 mx-auto"},d={__name:"Home",setup(f){return e({url:"ping",auto:!0}),a(!1),(m,n)=>(r(),t("div",c,[o(s)]))}};export{d as default};

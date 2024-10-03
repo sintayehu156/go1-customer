@@ -1,81 +1,61 @@
 <template>
-  <div>
+  <div class="h-[calc(100vh)] overflow-hidden flex flex-col">
     <div :class="['head-layout', { collapsed: isSidebarCollapsed }]">
       <div class="head-content">
-        <header class="border-b bg-white px-5 py-2.5 sm:px-5 pb-[2.605rem]">
-          <div class="float-left">Quotations</div>
-          <div class="float-right">
-            <!-- <Button
-              :variant="'solid'"
-              theme="gray"
-              size="sm"
-              label="+ New Quotation"
-              :loading="false"
-              :loadingText="null"
-              :disabled="false"
-              :link="null"
-            >
-              + New Quotation
-            </Button> -->
-            
-          </div>
-          
+        <header class="border-b bg-white flex h-12 items-center justify-between py-2.5 pl-5">
+          <div class="float-left ">Quotations</div>
+          <div class="float-right"></div>
         </header>
       </div>
     </div>
     <div :class="['layout', { collapsed: isSidebarCollapsed }]">
       <LeftSidebar class="z-[8]" :isCollapsed="isSidebarCollapsed" @toggle="toggleSidebar" />
       <div class="main-content">
-        <div class="fiter mb-2 flex gap-3">
-          <TextInput type="search" size="sm" variant="subtle" placeholder="Name" v-model="filterName" />         
-          <FormControl type="select"
-            :options="[
-              {},
-              { label: 'Draft',value: 'Draft',}, { label: 'Open',value: 'Open',}, { label: 'Replied',value: 'Replied',},
-              { label: 'Partially Ordered',value: 'Partially Ordered',},   { label: 'Ordered',value: 'Ordered',},   { label: 'Lost',value: 'Lost',},             
-              { label: 'Cancelled',value: 'Cancelled',}, { label: 'Expired',value: 'Expired',},                 
-            ]"
-            size="sm" variant="subtle" placeholder="Status" v-model="filterStatus" class="w-52" />
-          <TextInput type="search" size="sm" variant="subtle" placeholder="Total" v-model="filterTotal" />        
-          <DatePicker class="border-none" size="md" variant="subtle" placeholder="Date" v-model="filterDate"/>
-          <Button :variant="'subtle'" theme="gray" size="sm" @click="resetFilters"> Reset</Button>
-          <div class="flex gap-2">
-            <RefreshButton @refresh="reload" :isLoading="isLoading" />
+        <div class="fiter flex gap-2 flex items-center justify-between  px-1 py-4 -mt-3">
+          <TextInput type="search" size="sm" variant="subtle" placeholder="Name" v-model="filterName" class="w-48" />
+          <FormControl type="select" :options="[
+            {},
+            { label: 'Draft', value: 'Draft', }, { label: 'Open', value: 'Open', }, { label: 'Replied', value: 'Replied', },
+            { label: 'Partially Ordered', value: 'Partially Ordered', }, { label: 'Ordered', value: 'Ordered', }, { label: 'Lost', value: 'Lost', },
+            { label: 'Cancelled', value: 'Cancelled', }, { label: 'Expired', value: 'Expired', },
+          ]" size="sm" variant="subtle" placeholder="Status" v-model="filterStatus" class="w-48" />
+          <TextInput type="search" size="sm" variant="subtle" placeholder="Total" v-model="filterTotal" class="w-48" />
+          <DatePicker class="border-none w-48" size="md" variant="subtle" placeholder="Date" v-model="filterDate" />
+          <div class="flex ml-auto">
+            <Button :variant="'subtle'" theme="gray" size="sm" @click="resetFilters"> Reset</Button>
           </div>
+          <RefreshButton @refresh="reload" :isLoading="isLoading" />
         </div>
-        <ListView
-          class="h-[500px]"
-          :columns="columns"
-          :rows="paginatedRows"
-          :options="{
-            getRowRoute: (row) => ({
-              name: 'QuotationDetails',
-              params: { id: row.name },
-            }),
-            selectable: true,
-            showTooltip: true,
-            resizeColumn: true,
-            emptyState: {
-              title: 'No records found',
-            },
-          }"
-          row-key="name"
-          @row-click="OpenClick"
-        >
-        <template #cell="{ item, column }">
+        <ListView class="h-full truncate" :columns="columns" :rows="paginatedRows" :options="{
+          getRowRoute: (row) => ({
+            name: 'QuotationDetails',
+            params: { id: row.name },
+          }),
+          selectable: true,
+          showTooltip: true,
+          resizeColumn: true,
+          emptyState: {
+            title: 'No records found',
+          },
+        }" row-key="name" @row-click="OpenClick">
+          <template #cell="{ item, column }">
             <div v-if="column.key === 'status'">
-              <Badge
-                v-bind="getStatusTheme(item)"
-                size="sm"
-                :label="item"
-              />
+              <Badge v-bind="getStatusTheme(item)" size="sm" :label="item" />
+            </div>
+            <div v-else-if="column.key === 'name'">
+              <span class="text-black text-base"
+                style="max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block;">
+                {{ item }}
+              </span>
             </div>
             <div v-else>
-              <span class="font-medium text-gray-700 text-base" style="max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block;">{{ item }}</span>
+              <span class="font-small text-gray-700 text-base"
+                style="max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block;">{{
+                item }}</span>
             </div>
           </template>
         </ListView>
-        <Pagination :rows="filteredRows" @update:paginatedRows="updatePaginatedRows" /> 
+        <Pagination :rows="filteredRows" @update:paginatedRows="updatePaginatedRows" />
       </div>
     </div>
   </div>
@@ -87,7 +67,7 @@ import Pagination from '@/components/Pagination.vue'
 import ListView from '@/components/ListView/ListView.vue'
 import RefreshButton from '@/components/RefreshButton.vue'
 import { ref, onMounted, computed } from 'vue'
-import { createResource, FeatherIcon,TextInput,FormControl,DatePicker, Badge,Button} from 'frappe-ui'
+import { createResource, FeatherIcon, TextInput, FormControl, DatePicker, Badge, Button } from 'frappe-ui'
 import { useRouter } from 'vue-router'
 
 export default {
@@ -100,23 +80,23 @@ export default {
     TextInput,
     FormControl,
     DatePicker,
-    Badge,Button
+    Badge, Button
   },
   setup() {
     const isSidebarCollapsed = ref(false)
-    const rows = ref([]) 
-    const paginatedRows = ref([]) 
+    const rows = ref([])
+    const paginatedRows = ref([])
     const isLoading = ref(false)
 
     const columns = ref([
-      { label: 'Name', key: 'name', width: '200px' },
-      { label: 'Status', key: 'status', width: '200px' },
-      { label: 'Date', key: 'transaction_date', width: '200px' },
-      { label: 'Item', key: 'item_name', width: '200px' },
-      { label: 'Total', key: 'total', width: '200px' },
+      { label: 'Name', key: 'name', },
+      { label: 'Status', key: 'status', },
+      { label: 'Date', key: 'transaction_date', },
+      { label: 'Item', key: 'item_name', },
+      { label: 'Total', key: 'total', },
     ])
 
-   
+
     const quote = createResource({
       url: 'go1_customer.go1_customer.api.api.get_quotation',
       method: 'get',
@@ -131,7 +111,7 @@ export default {
           return {
             ...row,
             total: String(row.grand_total),
-            item_name: item_names || 'No items', 
+            item_name: item_names || 'No items',
             transaction_date: row.transaction_date
           }
         })
@@ -144,7 +124,7 @@ export default {
     }
 
     const reload = () => {
-      fetchquote() 
+      fetchquote()
     }
 
     const toggleSidebar = () => {
@@ -179,25 +159,25 @@ export default {
     const filteredRows = computed(() => {
       return rows.value.filter(row => {
         const nameMatch = row.name.toLowerCase().includes(filterName.value.toLowerCase())
-        const statusMatch = row.status.toLowerCase().includes(filterStatus.value.toLowerCase()) || !filterStatus.value; 
-        const grand_totalMatch = row.grand_total.toString().includes(filterTotal.value.toString()) || !filterTotal.value;
-        const reversedDate = filterDate.value.split('-').reverse().join('-'); 
-        const dateMatch = row.transaction_date && row.transaction_date.includes(reversedDate);         
+        const statusMatch = row.status.toLowerCase().includes(filterStatus.value.toLowerCase()) || !filterStatus.value;
+        const grand_totalMatch = row.grand_total.toString().replace(/[.,]/g, '').includes(filterTotal.value.toString().replace(/[.,]/g, '')) || !filterTotal.value;
+        const reversedDate = filterDate.value.split('-').reverse().join('-');
+        const dateMatch = row.transaction_date && row.transaction_date.includes(reversedDate);
 
         return nameMatch && statusMatch && grand_totalMatch && dateMatch;
       });
     });
 
-    const getStatusTheme = (status) => {     
+    const getStatusTheme = (status) => {
       switch (status) {
         case 'Draft':
-          return { theme: "red" };  
+          return { theme: "red" };
         case 'Open':
           return { theme: "blue" };
         case 'Cancelled':
-          return { theme: "Green" };  
+          return { theme: "Green" };
         case 'Ordered':
-          return { theme: "orange" };             
+          return { theme: "orange" };
         default:
           return { theme: "gray" };
       }
@@ -230,7 +210,9 @@ export default {
 </script>
 
 <style scoped>
-html, body, #app {
+html,
+body,
+#app {
   height: 100%;
   margin: 0;
 }
@@ -244,7 +226,7 @@ html, body, #app {
 .layout {
   display: flex;
   width: 100%;
-  height: 100%; /* Full height */
+  height: calc(100vh - 50px);
   transition: margin-left 0.3s ease;
 }
 
@@ -252,53 +234,68 @@ html, body, #app {
   flex-grow: 1;
   padding: 1.25rem;
   transition: margin-left 0.3s ease;
-  margin-left: 220px; /* Default width of sidebar */
-  height: 100%; /* Full height */
+  margin-left: 220px;
+  display: flex;
+  flex-direction: column;
 }
 
 .head-content {
   flex-grow: 1;
   padding: 0px;
   transition: margin-left 0.3s ease;
-  margin-left: 220px; /* Default width of sidebar */
+  margin-left: 220px;
+  /* Default width of sidebar */
 }
 
 .collapsed .main-content {
-  margin-left: 60px; /* Adjust when sidebar is collapsed */
+  margin-left: 60px;
+  /* Adjust when sidebar is collapsed */
 }
 
 .collapsed .head-content {
-  margin-left: 60px; /* Adjust when sidebar is collapsed */
+  margin-left: 60px;
+  /* Adjust when sidebar is collapsed */
 }
 
 .list-row {
   display: flex;
   justify-content: space-between;
   padding: 10px;
-  border-bottom: 1px solid #e5e7eb; /* Gray bottom border */
+  border-bottom: 1px solid #e5e7eb;
+  /* Gray bottom border */
+}
+
+.pagination {
+  margin-top: auto;
 }
 
 .bg-green-100 {
-  background-color: #d1fae5; /* Light green */
+  background-color: #d1fae5;
+  /* Light green */
 }
 
 .bg-gray-100 {
-  background-color: #f3f4f6; /* Light gray */
+  background-color: #f3f4f6;
+  /* Light gray */
 }
 
 .bg-red-100 {
-  background-color: #fee2e2; /* Light red */
+  background-color: #fee2e2;
+  /* Light red */
 }
 
 .bg-orange-100 {
-  background-color: #ffedd5; /* Light orange */
+  background-color: #ffedd5;
+  /* Light orange */
 }
 
 .bg-yellow-100 {
-  background-color: #fef3c7; /* Light yellow */
+  background-color: #fef3c7;
+  /* Light yellow */
 }
 
 .bg-gray-200 {
-  background-color: #e5e7eb; /* Gray */
+  background-color: #e5e7eb;
+  /* Gray */
 }
 </style>

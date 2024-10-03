@@ -1,41 +1,85 @@
 <template>
-  <div class="max-w-3xl py-12 mx-auto">
-    <LeftSidebar />
-    <!-- <Quotations /> -->
-    <!-- <h2 class="font-bold text-lg text-gray-600 mb-4">
-      Welcome {{ session.user }}!
-    </h2>
-
-    <Button theme="gray" variant="solid" icon-left="code" @click="ping.fetch" :loading="ping.loading">
-      Click to send 'ping' request
-    </Button>
-    <div>
-      {{ ping.data }}
+  <div :class="['head-layout', { collapsed: isSidebarCollapsed }]">
+       <div class="head-content">
+         <header class="border-b bg-white px-5 py-2.5 sm:px-5">
+           Dashboard
+         </header>
+       </div>
+     </div>
+     <div :class="['layout', { collapsed: isSidebarCollapsed }]">
+       <LeftSidebar :isCollapsed="isSidebarCollapsed" @toggle="toggleSidebar" />
+       
+       <div class="main-content">
+         <Dashboard/>
+       </div>
+ 
     </div>
-    <pre>{{ ping }}</pre>
-
-    <div class="flex flex-row space-x-2 mt-4">
-      <Button @click="showDialog = true">Open Dialog</Button>
-      <Button @click="session.logout.submit()">Logout</Button>
-    </div>  -->
-
-    <!-- Dialog -->
-    <!-- <Dialog title="Title" v-model="showDialog"> Dialog content </Dialog> -->
-  </div>
-</template>
-
-<script setup>
-import { ref } from 'vue'
-import { Dialog } from 'frappe-ui'
-import { createResource } from 'frappe-ui'
-import { session } from '../data/session'
-import  LeftSidebar  from '@/components/Custom Layout/LeftSidebar.vue'
-// import { Quotations } from '@/pages/Quotations.vue'
-
-const ping = createResource({
-  url: 'ping',
-  auto: true,
-})
-
-const showDialog = ref(false)
-</script>
+ </template>
+ 
+ <script>
+ import LeftSidebar from '@/components/Custom Layout/LeftSidebar.vue'
+ import Dashboard from '@/dashboard/dashboard.vue'
+ import { ref } from 'vue'
+ 
+ export default {
+   components: {
+     LeftSidebar,
+     Dashboard,
+   },
+   setup() {
+     const isSidebarCollapsed = ref(false)
+ 
+     const toggleSidebar = () => {
+       isSidebarCollapsed.value = !isSidebarCollapsed.value
+     }
+ 
+     return {
+       isSidebarCollapsed,
+       toggleSidebar,
+     }
+   },
+ }
+ </script>
+ 
+ <style scoped>
+ .head -layout {
+   display: flex;
+   width: 100%;
+   transition: margin-left 0.3s ease;
+ }
+ /* .layout {
+   display: flex;
+   width: 100%;
+   height: 100vh;
+   transition: margin-left 0.3s ease;
+ } */
+ 
+ .main-content {
+   flex-grow: 1;
+   padding: 1.25rem;
+   transition: margin-left 0.3s ease;
+   margin-left: 200px; 
+ }
+ .head-content {
+   flex-grow: 1;
+   padding: 0px;
+   transition: margin-left 0.3s ease;
+   margin-left: 220px;
+ }
+ .collapsed .main-content {
+   margin-left: 60px; 
+ }
+ .collapsed .head-content {
+   margin-left: 60px; 
+ }
+ .list-row {
+   display: flex;
+   justify-content: space-between;
+   padding: 10px;
+   border-bottom: 1px solid #e5e7eb; /* Gray bottom border */
+ }
+ 
+ .row:hover {
+   background-color: #f9fafb; /* Light gray background on hover */
+ }
+ </style> 

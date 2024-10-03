@@ -1,257 +1,41 @@
-<!-- <template>
+<template>
   <div>
     <div :class="['head-layout', { collapsed: isSidebarCollapsed }]">
       <div class="head-content">
-        <header class="border-b bg-white px-5 py-2.5 sm:px-5">
-          <Breadcrumbs :items="breadcrumbsList" class="bg-inherit" />
-        </header>
-      </div>
-    </div>
-    <div :class="['layout', { collapsed: isSidebarCollapsed }]">
-      <LeftSidebar :isCollapsed="isSidebarCollapsed" @toggle="toggleSidebar" />
-      <div class="main-content">
-        <div class="flex flex-col gap-2 rounded-md border p-4">
-          <div class="p-2 bg-white">
-            <div class="truncate text-3xl font-semibold">{{ name }}</div>
-            <FormControl
-              :type="'text'"
-              size="sm"
-              variant=""
-              placeholder=""
-              :disabled="false"
-              label="Label"
-              v-model="name"
-            />
-          </div>
-          <div class="p-2">
-            <FormControl
-              :type="'text'"
-              size="sm"
-              variant="subtle"
-              placeholder="Placeholder"
-              :disabled="false"
-              label="Label"
-              v-model="status"
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
-<script>
-import LeftSidebar from '@/components/Custom Layout/LeftSidebar.vue';
-import { ref, onMounted } from 'vue';
-import { createResource, Breadcrumbs, FormControl } from 'frappe-ui';
-import { useRouter, useRoute } from 'vue-router';
-
-export default {
-  components: {
-    LeftSidebar,
-    Breadcrumbs,
-    FormControl,
-  },
-  setup() {
-    const router = useRouter();
-    const route = useRoute(); 
-
-    const isSidebarCollapsed = ref(false);
-    const name = ref('');
-    const status = ref('');
-
-    const order = createResource({
-      url: '/api/method/frappe.client.get_list',
-      params: {
-        doctype: 'Sales Order',
-        fields: ['*'],
-      },
-    });
-
-    const fetchissuedetails = async () => {
-      try {
-        const id = route.params.id;
-        const data = await order.fetch();
-        const issuedetails = data.find(item => item.name === id);
-        if (issuedetails) {
-          name.value = issuedetails.name;
-          status.value = issuedetails.status; 
-        }
-        console.log('Fetched order details:', issuedetails);
-      } catch (error) {
-        console.error('Error fetching order details:', error);
-      }
-    };
-
-    const toggleSidebar = () => {
-      isSidebarCollapsed.value = !isSidebarCollapsed.value;
-    };
-
-    onMounted(() => {
-      fetchissuedetails();
-    });
-
-    return {
-      isSidebarCollapsed,
-      name,
-      status,
-      toggleSidebar,
-    };
-  },
-}
-</script>
-
-<style scoped>
-.head-layout {
-  display: flex;
-  width: 100%;
-  transition: margin-left 0.3s ease;
-}
-.layout {
-  display: flex;
-  width: 100%;
-  height: 100vh;
-  transition: margin-left 0.3s ease;
-}
-
-.main-content {
-  flex-grow: 1;
-  padding: 1.25rem;
-  transition: margin-left 0.3s ease;
-  margin-left: 220px; /* Default width of sidebar */
-}
-.head-content {
-  flex-grow: 1;
-  padding: 0px;
-  transition: margin-left 0.3s ease;
-  margin-left: 220px; /* Default width of sidebar */
-}
-.collapsed .main-content {
-  margin-left: 60px; /* Adjust when sidebar is collapsed */
-}
-.collapsed .head-content {
-  margin-left: 60px; /* Adjust when sidebar is collapsed */
-}
-.list-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 10px;
-  border-bottom: 1px solid #e5e7eb; /* Gray bottom border */
-}
-
-.row:hover {
-  background-color: #f9fafb; /* Light gray background on hover */
-}
-</style>
- -->
-
- <template>
-  <div>
-    <div :class="['head-layout', { collapsed: isSidebarCollapsed }]">
-      <div class="head-content">
-        <header
-          class="border-b bg-white px-5 py-6.5 pb-[2.625rem] sm:px-5 mb-12"
-        >
+        <header class="border-b bg-white px-5 py-6.5 pb-[2.625rem] sm:px-5 mb-12">
           <Breadcrumbs :items="breadcrumbsList" class="float-left" />
         </header>
       </div>
     </div>
     <div :class="['layout', { collapsed: isSidebarCollapsed }]">
       <LeftSidebar :isCollapsed="isSidebarCollapsed" @toggle="toggleSidebar" />
-      <div class="main-content">
-        <div class="bg-white shadow-md rounded-lg p-6 space-y-6  pb-[2.625rem]">
-          <div
-            class="float-left mb-1 text-9xl font-bold text-gray-800 -mt-2"
-            style="font-size: 1.85rem"
-          >
+      <div class="main-content p-5" style="padding-left: 150px; padding-right: 150px;">
+        <div class="bg-white border rounded-lg p-6 space-y-6  pb-[2.625rem]">
+          <div class="float-left mb-1 text-9xl font-bold text-gray-800 -mt-2" style="font-size: 1.85rem">
             <p>Issue</p>
             <p class="text-9xl font-bold text-gray-600" style="font-size: 1rem">
               {{ subject }}
             </p>
           </div>
           <div class="float-right mb-1">
-            <Button
-              v-if="!isEditing"
-              :variant="'solid'"
-              theme="gray"
-              size="md"
-              label="Edit"
-              :disabled="false"
-              @click="startEditing"
-              class=""
-            />
+            <Button v-if="!isEditing" :variant="'solid'" theme="gray" size="md" label="Edit" :disabled="false"
+              @click="startEditing" class="" />
           </div>
           <div class="border-b pb-7 pt-10"></div>
           <div class="p-2">
-            <FormControl
-              :type="'text'"
-              size="md"
-              variant="subtle"
-              placeholder="subject"
-              :disabled="!isEditing"
-              label="Subject"
-              v-model="subject"
-              class="mb-5"
-            />
-            <FormControl
-              :type="'select'"
-              size="md"
-              :options="statusOptions"
-              variant="subtle"
-              placeholder="status"
-              :disabled="!isEditing"
-              label="Status"
-              v-model="status"
-              class="mb-5 text-gray-1000 text-base"
-            />
-            <FormControl
-              :type="'select'"
-              size="md"
-              variant="subtle"
-              :options="customOption"
-              :disabled="!isEditing"
-              label="Customer"
-              v-model="customer"
-              class="mb-5"
-            />
-            <FormControl
-              :type="'textarea'"
-              size="md"
-              variant="subtle"
-              placeholder="Placeholder"
-              :disabled="!isEditing"
-              label="Description"
-              v-model="description"
-              class="mb-5"
-            />
-            <FormControl
-              type="select"
-              size="md"
-              variant="subtle"
-              :options="priorityOption"
-              placeholder="Placeholder"
-              :disabled="!isEditing"
-              label="Priority"
-              v-model="priority"
-              class="mb-5"
-            />
+            <FormControl :type="'text'" size="md" variant="subtle" placeholder="subject" :disabled="!isEditing"
+              label="Subject" v-model="subject" class="mb-5" />
+
+
+            <TextEditor :fixedMenu="true" class="custom-editor " placeholder="Describe your problem..."
+              :model-value="description" @change:model-value="val => description.description = val" />
+
+
             <div v-if="isEditing" class="float-right flex gap-4 ">
-              <Button
-                :variant="'subtle'"
-                theme="gray"
-                size="md"
-                label="Discard"
-                :disabled="false"
-                @click="cancelEditing"
-              />
-              <Button
-                :variant="'solid'"
-                theme="gray"
-                size="md"
-                label="Submit"
-                :disabled="false"
-                @click="submitChanges"
-              />
+              <Button :variant="'subtle'" theme="gray" size="md" label="Discard" :disabled="false"
+                @click="cancelEditing" />
+              <Button :variant="'solid'" theme="gray" size="md" label="Submit" :disabled="false"
+                @click="submitChanges" />
             </div>
           </div>
 
@@ -264,8 +48,9 @@ export default {
 <script>
 import LeftSidebar from '@/components/Custom Layout/LeftSidebar.vue'
 import { ref, watch, onMounted } from 'vue'
-import { createResource, Breadcrumbs, Button, FormControl } from 'frappe-ui'
+import { createResource, Breadcrumbs, Button, FormControl, TextEditor } from 'frappe-ui'
 import { useRouter, useRoute } from 'vue-router'
+// import TextEditor from '../components/TextEditor/TextEditor.vue';
 
 export default {
   components: {
@@ -273,6 +58,7 @@ export default {
     Breadcrumbs,
     Button,
     FormControl,
+    TextEditor
   },
   setup() {
     const router = useRouter()
@@ -286,6 +72,7 @@ export default {
     const priority = ref('')
     const customer = ref('')
     const subject = ref('')
+
     const customOption = ref([])
     const priorityOption = ref([])
 
@@ -320,6 +107,7 @@ export default {
             /<\/?[^>]+>/gi,
             ''
           )
+          console.log("Description after fetch:", description.value) // Check the value here
           customer.value = issueDetails.customer
           priority.value = issueDetails.priority
         }
@@ -348,6 +136,7 @@ export default {
         description: description.value,
         customer: customer.value,
       }
+      // console.log("hello ",issueData)
 
       try {
         const response = await fetch(`/api/resource/Issue/${issueId}`, {
@@ -386,7 +175,7 @@ export default {
         const prioritydata = await response.json()
         priorityOption.value =
           prioritydata.data.map((users) => users.name) || []
-        console.log('pr', prioritydata)
+        // console.log('pr', prioritydata)
       } catch (error) {
         console.error('Error fetching customers:', error)
       }
@@ -429,12 +218,13 @@ export default {
 }
 </script>
 
-  <style scoped>
+<style scoped>
 .head-layout {
   display: flex;
   width: 100%;
   transition: margin-left 0.3s ease;
 }
+
 .layout {
   display: flex;
   width: 100%;
@@ -446,30 +236,54 @@ export default {
   flex-grow: 1;
   padding: 1.25rem;
   transition: margin-left 0.3s ease;
-  margin-left: 220px; /* Default width of sidebar */
+  margin-left: 220px;
+  /* Default width of sidebar */
 }
+
 .head-content {
   flex-grow: 1;
   padding: 0px;
   transition: margin-left 0.3s ease;
-  margin-left: 220px; /* Default width of sidebar */
+  margin-left: 220px;
+  /* Default width of sidebar */
 }
+
 .collapsed .main-content {
-  margin-left: 60px; /* Adjust when sidebar is collapsed */
+  margin-left: 60px;
+  /* Adjust when sidebar is collapsed */
 }
+
 .collapsed .head-content {
-  margin-left: 60px; /* Adjust when sidebar is collapsed */
+  margin-left: 60px;
+  /* Adjust when sidebar is collapsed */
 }
+
 .status-dot {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  border-width: var(--border-width, 2px); /* Use dynamic border width */
+  border-width: var(--border-width, 2px);
+  /* Use dynamic border width */
 }
+
+
+
+/* Text editor styles */
+.custom-editor {
+  border: 1px solid #d1d5db;
+  border-radius: 13px;
+  min-height: 200px;
+  overflow-y: auto;
+  max-width: 100%;
+  margin-bottom: 10px;
+  display: block;
+}
+
+
+
 @media (max-width: 250px) {
   .main-content {
     margin-left: 60px;
   }
 }
 </style>
-  
